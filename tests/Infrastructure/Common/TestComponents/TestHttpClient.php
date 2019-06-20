@@ -21,6 +21,10 @@ class TestHttpClient extends HttpClient
      * @var array
      */
     private $history;
+    /**
+     * @var array
+     */
+    private $autoConfigurationCombinations = array();
 
     /**
      * @inheritdoc
@@ -77,13 +81,28 @@ class TestHttpClient extends HttpClient
     /**
      * @inheritdoc
      */
-    protected function getAdditionalOptionsCombinations()
+    protected function getAutoConfigurationOptionsCombinations()
     {
-        $combinations = array();
-        $combinations[] = array(new OptionsDTO(CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4));
-        $combinations[] = array(new OptionsDTO(CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V6));
+        if (empty($this->autoConfigurationCombinations)) {
+            $this->setAdditionalOptionsCombinations(
+                array(
+                    array(new OptionsDTO(CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4)),
+                    array(new OptionsDTO(CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V6)),
+                )
+            );
+        }
 
-        return $combinations;
+        return $this->autoConfigurationCombinations;
+    }
+
+    /**
+     * Sets the additional HTTP options combinations.
+     *
+     * @param array $combinations
+     */
+    protected function setAdditionalOptionsCombinations(array $combinations)
+    {
+        $this->autoConfigurationCombinations = $combinations;
     }
 
     /**
@@ -124,7 +143,7 @@ class TestHttpClient extends HttpClient
     }
 
     /**
-     * Return call count.
+     * Return call history.
      *
      * @return array
      */

@@ -5,6 +5,7 @@
 
 namespace Logeecom\Infrastructure\Configuration;
 
+use Logeecom\Infrastructure\Http\DTO\OptionsDTO;
 use Logeecom\Infrastructure\ORM\QueryFilter\QueryFilter;
 use Logeecom\Infrastructure\ORM\RepositoryRegistry;
 use Logeecom\Infrastructure\Singleton;
@@ -258,6 +259,65 @@ abstract class Configuration extends Singleton
     public function getDefaultQueueName()
     {
         return $this->getConfigValue('defaultQueueName', static::DEFAULT_QUEUE_NAME);
+    }
+
+    /**
+     * Gets current auto-configuration state.
+     *
+     * @return string Current state.
+     */
+    public function getAutoConfigurationState()
+    {
+        return $this->getConfigValue('autoConfigurationState', '');
+    }
+
+    /**
+     * Gets auto-configuration controller URL.
+     *
+     * Method is not abstract because only modules that need this functionality should override this method.
+     *
+     * @return string Auto-configuration URL.
+     */
+    public function getAutoConfigurationUrl()
+    {
+        return null;
+    }
+
+    /**
+     * Sets current auto-configuration state.
+     *
+     * @param string $state Current state.
+     */
+    public function setAutoConfigurationState($state)
+    {
+        $this->saveConfigValue('autoConfigurationState', $state);
+    }
+
+    /**
+     * Gets current http configuration options.
+     *
+     * @return \Logeecom\Infrastructure\Http\DTO\OptionsDTO[]
+     */
+    public function getHttpConfigurationOptions()
+    {
+        $data = json_decode($this->getConfigValue('httpConfigurationOptions', '[]'), true);
+
+        return OptionsDTO::fromArrayBatch($data);
+    }
+
+    /**
+     * Sets http configuration options.
+     *
+     * @param OptionsDTO[] $options HTTP configuration options
+     */
+    public function setHttpConfigurationOptions(array $options)
+    {
+        $data = array();
+        foreach ($options as $option) {
+            $data[] = $option->toArray();
+        }
+
+        $this->saveConfigValue('httpConfigurationOptions', json_encode($data));
     }
 
     /**
