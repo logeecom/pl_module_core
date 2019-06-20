@@ -1,32 +1,52 @@
 <?php
 
-namespace Logeecom\Tests\Infrastructure\HttpClient;
+namespace Logeecom\Tests\BusinessLogic\Http;
 
+use Logeecom\Infrastructure\Http\Configuration\AutoConfigurationController;
 use Logeecom\Infrastructure\Http\DTO\OptionsDTO;
 use Logeecom\Infrastructure\Http\HttpClient;
 use Logeecom\Infrastructure\Http\HttpResponse;
+use Logeecom\Tests\BusinessLogic\Common\BaseTestWithServices;
 use Logeecom\Tests\Infrastructure\Common\TestComponents\TestHttpClient;
 use Logeecom\Tests\Infrastructure\Common\TestServiceRegister;
-use PHPUnit\Framework\TestCase;
 
-class HttpClientTest extends TestCase
+class AutoConfigurationControllerTest extends BaseTestWithServices
 {
     /**
      * @var TestHttpClient
      */
     protected $httpClient;
 
-    protected function setUp()
+    /**
+     * @throws \Exception
+     */
+    public function setUp()
     {
+        parent::setUp();
+
         $this->httpClient = new TestHttpClient();
-        $proxyInstance = $this;
+        $me = $this;
         new TestServiceRegister(
             array(
-                HttpClient::CLASS_NAME => function () use ($proxyInstance) {
-                    return $proxyInstance->httpClient;
+                HttpClient::CLASS_NAME => function () use ($me) {
+                    return $me->httpClient;
                 },
             )
         );
+
+        $this->shopConfig->setAutoConfigurationUrl('http://example.com');
+    }
+
+    /**
+     * Test auto-configure to throw exception if auto-configure URL is not set.
+     *
+     * @expectedException \Logeecom\Infrastructure\Exceptions\BaseException
+     */
+    public function testAutoConfigureNoUrlSet()
+    {
+        $this->shopConfig->setAutoConfigurationUrl(null);
+        $controller = new AutoConfigurationController($this->shopConfig, $this->httpClient);
+        $controller->start();
     }
 
     /**
@@ -37,7 +57,8 @@ class HttpClientTest extends TestCase
         $response = new HttpResponse(200, array(), '{}');
         $this->httpClient->setMockResponses(array($response));
 
-        $success = $this->httpClient->autoConfigure('POST', 'test.url.com');
+        $controller = new AutoConfigurationController($this->shopConfig, $this->httpClient);
+        $success = $controller->start();
 
         $this->assertTrue($success, 'Auto-configure must be successful if default configuration request passed.');
         $this->assertCount(
@@ -46,6 +67,7 @@ class HttpClientTest extends TestCase
             'Set additional options should not be called'
         );
         $this->assertEmpty($this->httpClient->additionalOptions, 'Additional options should remain empty');
+        $this->assertEquals(AutoConfigurationController::STATE_SUCCEEDED, $controller->getState());
     }
 
     /**
@@ -60,7 +82,8 @@ class HttpClientTest extends TestCase
         $this->httpClient->setMockResponses($responses);
         $additionalOptionsCombination = array(new OptionsDTO(CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4));
 
-        $success = $this->httpClient->autoConfigure('POST', 'test.url.com');
+        $controller = new AutoConfigurationController($this->shopConfig, $this->httpClient);
+        $success = $controller->start();
 
         $this->assertTrue($success, 'Auto-configure must be successful if request passed with some combination.');
         $this->assertCount(
@@ -87,7 +110,8 @@ class HttpClientTest extends TestCase
         );
         $this->httpClient->setMockResponses($responses);
 
-        $success = $this->httpClient->autoConfigure('POST', 'test.url.com');
+        $controller = new AutoConfigurationController($this->shopConfig, $this->httpClient);
+        $success = $controller->start();
 
         $this->assertFalse($success, 'Auto-configure must failed if no combination resulted with request passed.');
         $this->assertCount(
@@ -106,7 +130,8 @@ class HttpClientTest extends TestCase
      */
     public function testAutoConfigureFailedWhenThereAreNoResponses()
     {
-        $success = $this->httpClient->autoConfigure('POST', 'test.url.com');
+        $controller = new AutoConfigurationController($this->shopConfig, $this->httpClient);
+        $success = $controller->start();
 
         $this->assertFalse($success, 'Auto-configure must failed if no combination resulted with request passed.');
         $this->assertCount(
