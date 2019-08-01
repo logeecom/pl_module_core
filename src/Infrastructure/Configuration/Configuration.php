@@ -321,6 +321,26 @@ abstract class Configuration extends Singleton
     }
 
     /**
+     * Sets the auto-test mode flag.
+     *
+     * @param bool $status
+     */
+    public function setAutoTestMode($status)
+    {
+        $this->saveConfigValue('autoTestMode', $status);
+    }
+
+    /**
+     * Returns whether the auto-test mode is active.
+     *
+     * @return bool TRUE if the auto-test mode is active; otherwise, FALSE.
+     */
+    public function isAutoTestMode()
+    {
+        return (bool)$this->getConfigValue('autoTestMode', false);
+    }
+
+    /**
      * Gets configuration value for given name.
      *
      * @param string $name Name of the config parameter.

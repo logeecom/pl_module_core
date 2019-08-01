@@ -1,17 +1,17 @@
 <?php
 
-namespace Logeecom\Tests\BusinessLogic\Http;
+namespace Logeecom\Tests\Infrastructure\Http;
 
-use Logeecom\Infrastructure\Http\Configuration\AutoConfigurationController;
+use Logeecom\Infrastructure\Http\AutoConfiguration;
 use Logeecom\Infrastructure\Http\CurlHttpClient;
 use Logeecom\Infrastructure\Http\DTO\OptionsDTO;
 use Logeecom\Infrastructure\Http\HttpClient;
 use Logeecom\Infrastructure\Http\HttpResponse;
-use Logeecom\Tests\BusinessLogic\Common\BaseTestWithServices;
+use Logeecom\Tests\Infrastructure\Common\BaseInfrastructureTestWithServices;
 use Logeecom\Tests\Infrastructure\Common\TestComponents\TestCurlHttpClient;
 use Logeecom\Tests\Infrastructure\Common\TestServiceRegister;
 
-class AutoConfigurationControllerCurlTest extends BaseTestWithServices
+class AutoConfigurationCurlTest extends BaseInfrastructureTestWithServices
 {
     /**
      * @var \Logeecom\Tests\Infrastructure\Common\TestComponents\TestCurlHttpClient
@@ -45,7 +45,7 @@ class AutoConfigurationControllerCurlTest extends BaseTestWithServices
     public function testAutoConfigureNoUrlSet()
     {
         $this->shopConfig->setAutoConfigurationUrl(null);
-        $controller = new AutoConfigurationController($this->shopConfig, $this->httpClient);
+        $controller = new AutoConfiguration($this->shopConfig, $this->httpClient);
         $controller->start();
     }
 
@@ -57,7 +57,7 @@ class AutoConfigurationControllerCurlTest extends BaseTestWithServices
         $response = new HttpResponse(200, array(), '{}');
         $this->httpClient->setMockResponses(array($response));
 
-        $controller = new AutoConfigurationController($this->shopConfig, $this->httpClient);
+        $controller = new AutoConfiguration($this->shopConfig, $this->httpClient);
         $success = $controller->start();
 
         $this->assertTrue($success, 'Auto-configure must be successful if default configuration request passed.');
@@ -67,7 +67,7 @@ class AutoConfigurationControllerCurlTest extends BaseTestWithServices
             'Set additional options should not be called'
         );
         $this->assertEmpty($this->shopConfig->getHttpConfigurationOptions(), 'Additional options should remain empty');
-        $this->assertEquals(AutoConfigurationController::STATE_SUCCEEDED, $controller->getState());
+        $this->assertEquals(AutoConfiguration::STATE_SUCCEEDED, $controller->getState());
     }
 
     /**
@@ -82,7 +82,7 @@ class AutoConfigurationControllerCurlTest extends BaseTestWithServices
         $this->httpClient->setMockResponses($responses);
         $additionalOptionsCombination = array(new OptionsDTO(CurlHttpClient::SWITCH_PROTOCOL, true));
 
-        $controller = new AutoConfigurationController($this->shopConfig, $this->httpClient);
+        $controller = new AutoConfiguration($this->shopConfig, $this->httpClient);
         $success = $controller->start();
 
         $this->assertTrue($success, 'Auto-configure must be successful if request passed with some combination.');
@@ -122,7 +122,7 @@ class AutoConfigurationControllerCurlTest extends BaseTestWithServices
             new OptionsDTO(CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V6),
         );
 
-        $controller = new AutoConfigurationController($this->shopConfig, $this->httpClient);
+        $controller = new AutoConfiguration($this->shopConfig, $this->httpClient);
         $success = $controller->start();
 
         $this->assertTrue($success, 'Auto-configure must be successful if request passed with some combination.');
@@ -157,7 +157,7 @@ class AutoConfigurationControllerCurlTest extends BaseTestWithServices
         );
         $this->httpClient->setMockResponses($responses);
 
-        $controller = new AutoConfigurationController($this->shopConfig, $this->httpClient);
+        $controller = new AutoConfiguration($this->shopConfig, $this->httpClient);
         $success = $controller->start();
 
         $this->assertFalse($success, 'Auto-configure must failed if no combination resulted with request passed.');
@@ -177,7 +177,7 @@ class AutoConfigurationControllerCurlTest extends BaseTestWithServices
      */
     public function testAutoConfigureFailedWhenThereAreNoResponses()
     {
-        $controller = new AutoConfigurationController($this->shopConfig, $this->httpClient);
+        $controller = new AutoConfiguration($this->shopConfig, $this->httpClient);
         $success = $controller->start();
 
         $this->assertFalse($success, 'Auto-configure must failed if no combination resulted with request passed.');
