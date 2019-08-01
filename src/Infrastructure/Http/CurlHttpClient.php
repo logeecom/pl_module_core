@@ -286,7 +286,7 @@ class CurlHttpClient extends HttpClient
             if ($i === 0) {
                 $headers[] = $line;
             } else {
-                list($key, $value) = explode(': ', $line);
+                list($key, $value) = explode(': ', $line, 2);
                 $headers[$key] = $value;
             }
         }

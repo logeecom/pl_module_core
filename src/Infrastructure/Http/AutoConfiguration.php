@@ -1,17 +1,16 @@
 <?php
 
-namespace Logeecom\Infrastructure\Http\Configuration;
+namespace Logeecom\Infrastructure\Http;
 
 use Logeecom\Infrastructure\Configuration\Configuration;
 use Logeecom\Infrastructure\Exceptions\BaseException;
-use Logeecom\Infrastructure\Http\HttpClient;
 
 /**
  * Class AutoConfigurationController.
  *
  * @package Logeecom\Infrastructure\Http\Configuration
  */
-class AutoConfigurationController
+class AutoConfiguration
 {
     /**
      * Process state: Not started.

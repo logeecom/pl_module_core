@@ -4,6 +4,7 @@ namespace Logeecom\Tests\Infrastructure\Common\TestComponents;
 
 use Logeecom\Infrastructure\Http\CurlHttpClient;
 use Logeecom\Infrastructure\Http\Exceptions\HttpCommunicationException;
+use Logeecom\Infrastructure\Http\HttpResponse;
 
 class TestCurlHttpClient extends CurlHttpClient
 {
@@ -33,7 +34,7 @@ class TestCurlHttpClient extends CurlHttpClient
     /**
      * @inheritdoc
      */
-    public function executeSynchronousRequest()
+    protected function executeSynchronousRequest()
     {
         $this->history[] = array(
             'type' => self::REQUEST_TYPE_SYNCHRONOUS,
@@ -48,13 +49,24 @@ class TestCurlHttpClient extends CurlHttpClient
             throw new HttpCommunicationException('No response');
         }
 
-        return array_shift($this->responses);
+        $response = array_shift($this->responses);
+        if ($response instanceof HttpResponse) {
+            return $response;
+        }
+
+        $apiResponse = $this->strip100Header($response['data']);
+
+        return new HttpResponse(
+            $response['status'],
+            $this->getHeadersFromCurlResponse($apiResponse),
+            $this->getBodyFromCurlResponse($apiResponse)
+        );
     }
 
     /**
      * @inheritdoc
      */
-    public function executeAsynchronousRequest()
+    protected function executeAsynchronousRequest()
     {
         $this->calledAsync = true;
 
