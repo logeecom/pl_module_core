@@ -4,13 +4,12 @@ namespace Logeecom\Tests\Infrastructure\Common\TestComponents;
 
 use Logeecom\Infrastructure\Http\CurlHttpClient;
 use Logeecom\Infrastructure\Http\Exceptions\HttpCommunicationException;
-use Logeecom\Infrastructure\Http\HttpResponse;
 
 class TestCurlHttpClient extends CurlHttpClient
 {
     const REQUEST_TYPE_SYNCHRONOUS = 1;
     const REQUEST_TYPE_ASYNCHRONOUS = 2;
-    public $calledAsync = false;
+    const MAX_REDIRECTS = 5;
     public $setAdditionalOptionsCallHistory = array();
     /**
      * @var array
@@ -32,52 +31,13 @@ class TestCurlHttpClient extends CurlHttpClient
     }
 
     /**
-     * @inheritdoc
+     * Return call history.
+     *
+     * @return array
      */
-    protected function executeSynchronousRequest()
+    public function getHistory()
     {
-        $this->history[] = array(
-            'type' => self::REQUEST_TYPE_SYNCHRONOUS,
-            'method' => isset($this->curlOptions[CURLOPT_CUSTOMREQUEST]) ? $this->curlOptions[CURLOPT_CUSTOMREQUEST]
-                : 'POST',
-            'url' => $this->curlOptions[CURLOPT_URL],
-            'headers' => $this->curlOptions[CURLOPT_HTTPHEADER],
-            'body' => isset($this->curlOptions[CURLOPT_POSTFIELDS]) ? $this->curlOptions[CURLOPT_POSTFIELDS] : '',
-        );
-
-        if (empty($this->responses)) {
-            throw new HttpCommunicationException('No response');
-        }
-
-        $response = array_shift($this->responses);
-        if ($response instanceof HttpResponse) {
-            return $response;
-        }
-
-        $apiResponse = $this->strip100Header($response['data']);
-
-        return new HttpResponse(
-            $response['status'],
-            $this->getHeadersFromCurlResponse($apiResponse),
-            $this->getBodyFromCurlResponse($apiResponse)
-        );
-    }
-
-    /**
-     * @inheritdoc
-     */
-    protected function executeAsynchronousRequest()
-    {
-        $this->calledAsync = true;
-
-        $this->history[] = array(
-            'type' => self::REQUEST_TYPE_ASYNCHRONOUS,
-            'method' => isset($this->curlOptions[CURLOPT_CUSTOMREQUEST]) ? $this->curlOptions[CURLOPT_CUSTOMREQUEST]
-                : 'POST',
-            'url' => $this->curlOptions[CURLOPT_URL],
-            'headers' => $this->curlOptions[CURLOPT_HTTPHEADER],
-            'body' => isset($this->curlOptions[CURLOPT_POSTFIELDS]) ? $this->curlOptions[CURLOPT_POSTFIELDS] : '',
-        );
+        return $this->history;
     }
 
     /**
@@ -91,13 +51,49 @@ class TestCurlHttpClient extends CurlHttpClient
     }
 
     /**
-     * Return call history.
+     * Sets indicator whether to follow location or not.
      *
-     * @return array
+     * @param bool $follow
      */
-    public function getHistory()
+    public function setFollowLocation($follow)
     {
-        return $this->history;
+        $this->followLocation = $follow;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    protected function executeSynchronousRequest()
+    {
+        $this->setHistory(self::REQUEST_TYPE_SYNCHRONOUS);
+
+        return parent::executeSynchronousRequest();
+    }
+
+    /**
+     * @inheritdoc
+     */
+    protected function executeAsynchronousRequest()
+    {
+        $this->setHistory(self::REQUEST_TYPE_ASYNCHRONOUS);
+
+        return parent::executeAsynchronousRequest();
+    }
+
+    /**
+     * Mocks cURL request and returns response and status code.
+     *
+     * @return array Array with plain response as the first item and status code as the second item.
+     */
+    protected function executeCurlRequest()
+    {
+        if (empty($this->responses)) {
+            throw new HttpCommunicationException('No response');
+        }
+
+        $response = array_shift($this->responses);
+
+        return array($response['data'], $response['status']);
     }
 
     /**
@@ -107,5 +103,22 @@ class TestCurlHttpClient extends CurlHttpClient
     {
         parent::setAdditionalOptions($options);
         $this->setAdditionalOptionsCallHistory[] = $options;
+    }
+
+    /**
+     * Sets call history.
+     *
+     * @param int $type
+     */
+    protected function setHistory($type)
+    {
+        $this->history[] = array(
+            'type' => $type,
+            'method' => isset($this->curlOptions[CURLOPT_CUSTOMREQUEST]) ? $this->curlOptions[CURLOPT_CUSTOMREQUEST]
+                : 'POST',
+            'url' => $this->curlOptions[CURLOPT_URL],
+            'headers' => $this->curlOptions[CURLOPT_HTTPHEADER],
+            'body' => isset($this->curlOptions[CURLOPT_POSTFIELDS]) ? $this->curlOptions[CURLOPT_POSTFIELDS] : '',
+        );
     }
 }

@@ -4,7 +4,6 @@ namespace Logeecom\Tests\Infrastructure\Http;
 
 use Logeecom\Infrastructure\Http\CurlHttpClient;
 use Logeecom\Infrastructure\Http\HttpClient;
-use Logeecom\Infrastructure\Http\HttpResponse;
 use Logeecom\Tests\Infrastructure\Common\BaseInfrastructureTestWithServices;
 use Logeecom\Tests\Infrastructure\Common\TestComponents\TestCurlHttpClient;
 use Logeecom\Tests\Infrastructure\Common\TestServiceRegister;
@@ -35,9 +34,7 @@ class CurlHttpClientTest extends BaseInfrastructureTestWithServices
      */
     public function testSyncCall()
     {
-        $responses = array(
-            new HttpResponse(200, array(), '{}'),
-        );
+        $responses = array($this->getResponse(200));
 
         $this->successCall($responses);
     }
@@ -47,15 +44,19 @@ class CurlHttpClientTest extends BaseInfrastructureTestWithServices
      */
     public function testAsyncCall()
     {
-        $responses = array(
-            new HttpResponse(200, array(), '{}'),
-        );
+        $responses = array($this->getResponse(200));
+
         $this->httpClient->setMockResponses($responses);
 
         $this->httpClient->requestAsync('POST', 'test.url.com');
 
-        $this->assertTrue($this->httpClient->calledAsync, 'Async call should pass.');
-        $this->assertCount(1, $this->httpClient->getHistory());
+        $history = $this->httpClient->getHistory();
+        $this->assertCount(1, $history);
+        $this->assertEquals(
+            TestCurlHttpClient::REQUEST_TYPE_ASYNCHRONOUS,
+            $history[0]['type'],
+            'Async call should pass.'
+        );
         $curlOptions = $this->httpClient->getCurlOptions();
         $this->assertNotEmpty($curlOptions, 'Curl options should be set.');
         $this->assertTrue(isset($curlOptions[CURLOPT_TIMEOUT_MS]), 'Curl timeout should be set for async call.');
@@ -69,44 +70,14 @@ class CurlHttpClientTest extends BaseInfrastructureTestWithServices
     /**
      * Test parsing plain text response.
      */
-    public function testParsingResponseCR()
+    public function testParsingResponse()
     {
-        // header 100 should be stripped
-        // \r is added because HTTP response string from curl has CRLF line separator
-        $this->parsingResponse(
-            array(
-                array(
-                    'status' => 200,
-                    'data' => "HTTP/1.1 100 Continue\r
-\r
-HTTP/1.1 200 OK\r
-Cache-Control: no-cache\r
-Server: test\r
-Date: Wed Jul 4 15:32:03 2019\r
-Connection: Keep-Alive:\r
-Content-Type: application/json\r
-Content-Length: 24860\r
-X-Custom-Header: Content: database\r
-\r
-{\"status\":\"success\"}",
-                ),
-            )
-        );
-    }
-
-    /**
-     * Test parsing plain text response.
-     *
-     * @param array $responses
-     */
-    public function parsingResponse($responses)
-    {
-        $response = $this->successCall($responses);
+        $response = $this->successCall(array($this->getResponse(200)));
 
         $this->assertEquals(200, $response->getStatus());
         $headers = $response->getHeaders();
-        $this->assertCount(8, $headers);
-        $this->assertEquals('HTTP/1.1 200 OK', $headers[0]);
+        $this->assertCount(9, $headers);
+        $this->assertEquals('HTTP/1.1 200 CUSTOM', $headers[0]);
 
         $this->assertTrue(array_key_exists('Cache-Control', $headers));
         $this->assertEquals('no-cache', $headers['Cache-Control']);
@@ -129,6 +100,79 @@ X-Custom-Header: Content: database\r
         $this->assertEquals('success', $body['status']);
     }
 
+    /**
+     * Tests 301 and 302 following redirects.
+     */
+    public function test30xRedirectsSuccess()
+    {
+        $responses = array(
+            $this->getResponse(301),
+            $this->getResponse(302),
+            $this->getResponse(200),
+        );
+
+        $this->httpClient->setMockResponses($responses);
+        $success = $this->httpClient->request('POST', 'test.url.com');
+
+        $this->assertTrue($success->isSuccessful(), 'Sync call should pass.');
+        $history = $this->httpClient->getHistory();
+        $this->assertCount(1, $history);
+        // original URL
+        $this->assertEquals('test.url.com', $history[0]['url'], 'Base curl URL should not be changed.');
+        // updated URL
+        $options = $this->httpClient->getCurlOptions();
+        $this->assertEquals('https://test.url.com', $options[CURLOPT_URL], 'Curl URL should be changed.');
+    }
+
+    public function test30xMaxRedirectsSuccess()
+    {
+        // max redirects is 5;
+        $responses = array(
+            $this->getResponse(301),
+            $this->getResponse(302),
+            $this->getResponse(302),
+            $this->getResponse(301),
+            $this->getResponse(302),
+            $this->getResponse(200),
+        );
+
+        $this->successCall($responses);
+    }
+
+    /**
+     * Tests 301 and 302 following redirects.
+     */
+    public function test30xRedirectsFail()
+    {
+        // max redirects in test client is 5;
+        $responses = array(
+            $this->getResponse(301),
+            $this->getResponse(302),
+            $this->getResponse(302),
+            $this->getResponse(302),
+            $this->getResponse(301),
+            $this->getResponse(302),
+            $this->getResponse(200),
+        );
+
+        $this->httpClient->setMockResponses($responses);
+        $success = $this->httpClient->request('POST', 'test.url.com');
+
+        $this->assertFalse($success->isSuccessful(), 'Curl call should not pass.');
+    }
+
+    /**
+     * Tests setting follow location.
+     */
+    public function testFollowLocation()
+    {
+        $this->httpClient->setFollowLocation(false);
+        $this->successCall(array($this->getResponse(200)));
+
+        $options = $this->httpClient->getCurlOptions();
+        $this->assertArrayNotHasKey(CURLOPT_FOLLOWLOCATION, $options, 'Curl FOLLOWLOCATION should be set.');
+    }
+
     private function successCall($responses)
     {
         $this->httpClient->setMockResponses($responses);
@@ -139,5 +183,23 @@ X-Custom-Header: Content: database\r
         $this->assertNotEmpty($this->httpClient->getCurlOptions(), 'Curl options should be set.');
 
         return $success;
+    }
+
+    private function getResponse($code)
+    {
+        return array(
+            'status' => $code,
+            'data' => "HTTP/1.1 $code CUSTOM\r
+Cache-Control: no-cache\r
+Server: test\r
+Location: https://test.url.com\r
+Date: Wed Jul 4 15:32:03 2019\r
+Connection: Keep-Alive:\r
+Content-Type: application/json\r
+Content-Length: 24860\r
+X-Custom-Header: Content: database\r
+\r
+{\"status\":\"success\"}",
+        );
     }
 }
