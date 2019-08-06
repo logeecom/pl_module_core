@@ -6,7 +6,6 @@ use Logeecom\Infrastructure\Http\AutoConfiguration;
 use Logeecom\Infrastructure\Http\CurlHttpClient;
 use Logeecom\Infrastructure\Http\DTO\OptionsDTO;
 use Logeecom\Infrastructure\Http\HttpClient;
-use Logeecom\Infrastructure\Http\HttpResponse;
 use Logeecom\Tests\Infrastructure\Common\BaseInfrastructureTestWithServices;
 use Logeecom\Tests\Infrastructure\Common\TestComponents\TestCurlHttpClient;
 use Logeecom\Tests\Infrastructure\Common\TestServiceRegister;
@@ -54,7 +53,7 @@ class AutoConfigurationCurlTest extends BaseInfrastructureTestWithServices
      */
     public function testAutoConfigureSuccessfullyWithDefaultOptions()
     {
-        $response = new HttpResponse(200, array(), '{}');
+        $response = $this->getResponse(200);
         $this->httpClient->setMockResponses(array($response));
 
         $controller = new AutoConfiguration($this->shopConfig, $this->httpClient);
@@ -76,8 +75,8 @@ class AutoConfigurationCurlTest extends BaseInfrastructureTestWithServices
     public function testAutoConfigureSuccessWithSomeCombination()
     {
         $responses = array(
-            new HttpResponse(400, array(), '{}'),
-            new HttpResponse(200, array(), '{}'),
+            $this->getResponse(400),
+            $this->getResponse(200),
         );
         $this->httpClient->setMockResponses($responses);
         $additionalOptionsCombination = array(new OptionsDTO(CurlHttpClient::SWITCH_PROTOCOL, true));
@@ -106,14 +105,14 @@ class AutoConfigurationCurlTest extends BaseInfrastructureTestWithServices
     public function testAutoConfigureSuccessWithAllCombination()
     {
         $responses = array(
-            new HttpResponse(400, array(), '{}'),
-            new HttpResponse(400, array(), '{}'),
-            new HttpResponse(400, array(), '{}'),
-            new HttpResponse(400, array(), '{}'),
-            new HttpResponse(400, array(), '{}'),
-            new HttpResponse(400, array(), '{}'),
-            new HttpResponse(400, array(), '{}'),
-            new HttpResponse(200, array(), '{}'),
+            $this->getResponse(400),
+            $this->getResponse(400),
+            $this->getResponse(400),
+            $this->getResponse(400),
+            $this->getResponse(400),
+            $this->getResponse(400),
+            $this->getResponse(400),
+            $this->getResponse(200),
         );
         $this->httpClient->setMockResponses($responses);
         $additionalOptionsCombination = array(
@@ -147,13 +146,13 @@ class AutoConfigurationCurlTest extends BaseInfrastructureTestWithServices
     public function testAutoConfigureFailed()
     {
         $responses = array(
-            new HttpResponse(400, array(), '{}'),
-            new HttpResponse(400, array(), '{}'),
-            new HttpResponse(400, array(), '{}'),
-            new HttpResponse(400, array(), '{}'),
-            new HttpResponse(400, array(), '{}'),
-            new HttpResponse(400, array(), '{}'),
-            new HttpResponse(400, array(), '{}'),
+            $this->getResponse(400),
+            $this->getResponse(400),
+            $this->getResponse(400),
+            $this->getResponse(400),
+            $this->getResponse(400),
+            $this->getResponse(400),
+            $this->getResponse(400),
         );
         $this->httpClient->setMockResponses($responses);
 
@@ -189,6 +188,26 @@ class AutoConfigurationCurlTest extends BaseInfrastructureTestWithServices
         $this->assertEmpty(
             $this->shopConfig->getHttpConfigurationOptions(),
             'Reset additional options method should be called and additional options should be empty.'
+        );
+    }
+
+    private function getResponse($code)
+    {
+        // \r is added because HTTP response string from curl has CRLF line separator
+        return array(
+            'status' => $code,
+            'data' => "HTTP/1.1 100 Continue\r
+\r
+HTTP/1.1 $code OK\r
+Cache-Control: no-cache\r
+Server: test\r
+Date: Wed Jul 4 15:32:03 2019\r
+Connection: Keep-Alive:\r
+Content-Type: application/json\r
+Content-Length: 24860\r
+X-Custom-Header: Content: database\r
+\r
+{\"status\":\"success\"}",
         );
     }
 }

@@ -18,6 +18,10 @@ class CurlHttpClient extends HttpClient
      */
     const DEFAULT_ASYNC_REQUEST_TIMEOUT = 1000;
     /**
+     * Maximum number of 30x response redirects.
+     */
+    const MAX_REDIRECTS = 10;
+    /**
      * Config option that indicates whether to switch HTTP and HTTPS protocol.
      */
     const SWITCH_PROTOCOL = 'SWITCH_PROTOCOL';
@@ -27,6 +31,12 @@ class CurlHttpClient extends HttpClient
      * @var array
      */
     protected $curlOptions;
+    /**
+     * Indicates whether to let cURL follow location.
+     *
+     * @var bool
+     */
+    protected $followLocation = true;
     /**
      * cURL handler.
      *
@@ -49,6 +59,7 @@ class CurlHttpClient extends HttpClient
      */
     protected function sendHttpRequest($method, $url, $headers = array(), $body = '')
     {
+        $this->setCurlFollowLocationFlag();
         $this->setCurlSessionAndCommonRequestParts($method, $url, $headers, $body);
         $this->setCurlSessionOptionsForSynchronousRequest();
         $this->setCurlOptions();
@@ -84,10 +95,9 @@ class CurlHttpClient extends HttpClient
      */
     protected function executeSynchronousRequest()
     {
-        $apiResponse = curl_exec($this->curlSession);
-        $statusCode = curl_getinfo($this->curlSession, CURLINFO_HTTP_CODE);
+        list($result, $statusCode) = $this->executeRequest();
 
-        if ($apiResponse === false) {
+        if ($result === false) {
             $error = curl_errno($this->curlSession) . ' = ' . curl_error($this->curlSession);
             curl_close($this->curlSession);
 
@@ -97,12 +107,12 @@ class CurlHttpClient extends HttpClient
         }
 
         curl_close($this->curlSession);
-        $apiResponse = $this->strip100Header($apiResponse);
+        $result = $this->strip100Header($result);
 
         return new HttpResponse(
             $statusCode,
-            $this->getHeadersFromCurlResponse($apiResponse),
-            $this->getBodyFromCurlResponse($apiResponse)
+            $this->getHeadersFromCurlResponse($result),
+            $this->getBodyFromCurlResponse($result)
         );
     }
 
@@ -113,9 +123,9 @@ class CurlHttpClient extends HttpClient
      */
     protected function executeAsynchronousRequest()
     {
-        $result = curl_exec($this->curlSession);
-        $statusCode = curl_getinfo($this->curlSession, CURLINFO_HTTP_CODE);
+        list($result, $statusCode) = $this->executeRequest();
 
+        // 0 status code is set when timeout is reached
         if (!in_array($statusCode, array(0, 200), true)) {
             $curlError = '';
             if (curl_errno($this->curlSession)) {
@@ -129,6 +139,34 @@ class CurlHttpClient extends HttpClient
         curl_close($this->curlSession);
 
         return $result;
+    }
+
+    /**
+     * Executes cURL request and returns response and status code.
+     *
+     * @param int $redirects Redirects counter.
+     *
+     * @return array Array with plain response as the first item and status code as the second item.
+     */
+    protected function executeRequest($redirects = 0)
+    {
+        list($result, $statusCode) = $this->executeCurlRequest();
+
+        if ($redirects < static::MAX_REDIRECTS && in_array($statusCode, array(301, 302), true)) {
+            $headers = $this->getHeadersFromCurlResponse($result);
+            if (isset($headers['Location'])) {
+                // validate URL
+                $parsedUrl = parse_url($headers['Location']);
+                if (!empty($parsedUrl)) {
+                    $this->curlOptions[CURLOPT_URL] = $headers['Location'];
+                    curl_setopt($this->curlSession, CURLOPT_URL, $headers['Location']);
+
+                    return $this->executeRequest(++$redirects);
+                }
+            }
+        }
+
+        return array($result, $statusCode);
     }
 
     /**
@@ -214,9 +252,12 @@ class CurlHttpClient extends HttpClient
     protected function setCommonOptionsForCurlSession()
     {
         $this->curlOptions[CURLOPT_RETURNTRANSFER] = true;
-        $this->curlOptions[CURLOPT_FOLLOWLOCATION] = true;
-        // stop possible endless redirect loop when following 30x redirects.
-        $this->curlOptions[CURLOPT_MAXREDIRS] = 10;
+        if ($this->followLocation) {
+            $this->curlOptions[CURLOPT_FOLLOWLOCATION] = true;
+
+            // stop possible endless redirect loop when following 30x redirects.
+            $this->curlOptions[CURLOPT_MAXREDIRS] = static::MAX_REDIRECTS;
+        }
 
         $this->curlOptions[CURLOPT_IPRESOLVE] = CURL_IPRESOLVE_V4;
         $this->curlOptions[CURLOPT_SSL_VERIFYPEER] = false;
@@ -320,21 +361,29 @@ class CurlHttpClient extends HttpClient
         /**
          * Combinations to use:
          * CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V6 (default is CURL_IPRESOLVE_V4)
-         * CURLOPT_FOLLOWLOCATION => false (default is true) This is important in case when open_basedir si set.
+         * CURLOPT_FOLLOWLOCATION => false (default is true)
          * SWITCH_PROTOCOL => This is not a cURL option and is treated differently. Default is false.
          */
         $switchProtocol = new OptionsDTO(self::SWITCH_PROTOCOL, true);
-        $followLocation = new OptionsDTO(CURLOPT_FOLLOWLOCATION, false);
         $ipVersion = new OptionsDTO(CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V6);
+        if ($this->followLocation) {
+            $followLocation = new OptionsDTO(CURLOPT_FOLLOWLOCATION, false);
+
+            return array(
+                array($switchProtocol),
+                array($followLocation),
+                array($switchProtocol, $followLocation),
+                array($ipVersion),
+                array($switchProtocol, $ipVersion),
+                array($followLocation, $ipVersion),
+                array($switchProtocol, $followLocation, $ipVersion),
+            );
+        }
 
         return array(
             array($switchProtocol),
-            array($followLocation),
-            array($switchProtocol, $followLocation),
             array($ipVersion),
             array($switchProtocol, $ipVersion),
-            array($followLocation, $ipVersion),
-            array($switchProtocol, $followLocation, $ipVersion),
         );
     }
 
@@ -357,5 +406,27 @@ class CurlHttpClient extends HttpClient
         }
 
         return $url;
+    }
+
+    /**
+     * Executes cURL request and returns response and status code.
+     *
+     * @return array Array with plain response as the first item and status code as the second item.
+     */
+    protected function executeCurlRequest()
+    {
+        return array(curl_exec($this->curlSession), curl_getinfo($this->curlSession, CURLINFO_HTTP_CODE));
+    }
+
+    /**
+     * Determines whether to let cURL follow location based on the environment settings.
+     */
+    protected function setCurlFollowLocationFlag()
+    {
+        // when 'open_basedir' is set, some servers will return curl error upon initializing curl options
+        // when setting curl option to follow location
+        if (ini_get('open_basedir')) {
+            $this->followLocation = false;
+        }
     }
 }
