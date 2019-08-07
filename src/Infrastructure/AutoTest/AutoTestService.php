@@ -37,13 +37,13 @@ abstract class AutoTestService
         try {
             Logger::logInfo('Start auto-test');
         } catch (\Exception $e) {
-            throw new StorageNotAccessibleException('Cannot start the auto-test because storage is not accessible');
+            throw new StorageNotAccessibleException('Cannot start the auto-test because storage is not accessible.');
         }
 
         Logger::logInfo(
-            'Current HTTP configuration options',
+            'HTTP configuration options',
             'Core',
-            $this->getConfigService()->getHttpConfigurationOptions()
+            array('HTTPOptions' => $this->getConfigService()->getHttpConfigurationOptions())
         );
 
         /** @var QueueService $queueService */
