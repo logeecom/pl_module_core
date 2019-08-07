@@ -28,12 +28,13 @@ class AutoTestLogger extends Singleton implements ShopLoggerAdapter
     /**
      * Gets all log entities.
      *
-     * @return array An array of the LogData entities, if any.
+     * @return LogData[] An array of the LogData entities, if any.
      */
     public function getLogs()
     {
         $repo = RepositoryRegistry::getRepository(LogData::CLASS_NAME);
 
+        /** @noinspection PhpIncompatibleReturnTypeInspection */
         return $repo->select();
     }
 }

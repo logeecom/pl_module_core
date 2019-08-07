@@ -14,6 +14,10 @@ use Logeecom\Infrastructure\ORM\Entity;
 class LogData extends Entity
 {
     /**
+     * Fully qualified name of this class.
+     */
+    const CLASS_NAME = __CLASS__;
+    /**
      * Name of the integration.
      *
      * @var string
