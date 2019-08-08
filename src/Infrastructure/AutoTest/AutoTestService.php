@@ -17,7 +17,7 @@ use Logeecom\Infrastructure\TaskExecution\QueueService;
  *
  * @package Logeecom\Infrastructure\AutoTest
  */
-abstract class AutoTestService
+class AutoTestService
 {
     /**
      * Configuration service instance.
@@ -58,8 +58,6 @@ abstract class AutoTestService
      */
     public function setAutoTestMode()
     {
-        $this->registerLogRepository();
-
         ServiceRegister::registerService(
             ShopLoggerAdapter::CLASS_NAME,
             function () {
@@ -86,11 +84,6 @@ abstract class AutoTestService
 
         return $item ? $item->getStatus() : '';
     }
-
-    /**
-     * Registers a log repository.
-     */
-    abstract protected function registerLogRepository();
 
     /**
      * Gets the configuration service instance.

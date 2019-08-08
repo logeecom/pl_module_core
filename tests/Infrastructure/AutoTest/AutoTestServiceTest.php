@@ -3,6 +3,7 @@
 namespace Logeecom\Tests\Infrastructure\AutoTest;
 
 use Logeecom\Infrastructure\AutoTest\AutoTestLogger;
+use Logeecom\Infrastructure\AutoTest\AutoTestService;
 use Logeecom\Infrastructure\Http\DTO\OptionsDTO;
 use Logeecom\Infrastructure\Http\HttpClient;
 use Logeecom\Infrastructure\Logger\Interfaces\ShopLoggerAdapter;
@@ -14,6 +15,7 @@ use Logeecom\Infrastructure\TaskExecution\QueueService;
 use Logeecom\Infrastructure\TaskExecution\TaskRunnerWakeupService;
 use Logeecom\Tests\Infrastructure\Common\BaseInfrastructureTestWithServices;
 use Logeecom\Tests\Infrastructure\Common\TestComponents\ORM\MemoryQueueItemRepository;
+use Logeecom\Tests\Infrastructure\Common\TestComponents\ORM\MemoryRepository;
 use Logeecom\Tests\Infrastructure\Common\TestComponents\ORM\TestRepositoryRegistry;
 use Logeecom\Tests\Infrastructure\Common\TestComponents\TaskExecution\TestQueueService;
 use Logeecom\Tests\Infrastructure\Common\TestComponents\TaskExecution\TestTaskRunnerWakeupService;
@@ -87,7 +89,8 @@ class AutoTestServiceTest extends BaseInfrastructureTestWithServices
      */
     public function testSetAutoTestMode()
     {
-        $service = new TestAutoTestService();
+        RepositoryRegistry::registerRepository(LogData::getClassName(), MemoryRepository::getClassName());
+        $service = new AutoTestService();
         $service->setAutoTestMode();
 
         $repo = RepositoryRegistry::getRepository(LogData::getClassName());
@@ -109,9 +112,10 @@ class AutoTestServiceTest extends BaseInfrastructureTestWithServices
      */
     public function testStartAutoTestSuccess()
     {
+        RepositoryRegistry::registerRepository(LogData::getClassName(), MemoryRepository::getClassName());
         $this->shopConfig->setHttpConfigurationOptions(array(new OptionsDTO('test', 'value')));
 
-        $service = new TestAutoTestService();
+        $service = new AutoTestService();
         $queueItemId = $service->startAutoTest();
 
         self::assertNotNull($queueItemId, 'Test task should be enqueued.');
@@ -147,9 +151,8 @@ class AutoTestServiceTest extends BaseInfrastructureTestWithServices
      */
     public function testStartAutoTestStorageFailure()
     {
-        $service = new TestAutoTestService();
-        $service->shouldRegisterLogRepository = false;
-
+        // repository is not registered
+        $service = new AutoTestService();
         $service->startAutoTest();
     }
 }
