@@ -18,6 +18,8 @@ class AutoTestLogger extends Singleton implements ShopLoggerAdapter
      * Logs a message in system.
      *
      * @param LogData $data Data to log.
+     *
+     * @throws \Logeecom\Infrastructure\ORM\Exceptions\RepositoryNotRegisteredException
      */
     public function logMessage(LogData $data)
     {
@@ -29,12 +31,27 @@ class AutoTestLogger extends Singleton implements ShopLoggerAdapter
      * Gets all log entities.
      *
      * @return LogData[] An array of the LogData entities, if any.
+     *
+     * @throws \Logeecom\Infrastructure\ORM\Exceptions\RepositoryNotRegisteredException
      */
     public function getLogs()
     {
-        $repo = RepositoryRegistry::getRepository(LogData::CLASS_NAME);
-
         /** @noinspection PhpIncompatibleReturnTypeInspection */
-        return $repo->select();
+        return RepositoryRegistry::getRepository(LogData::CLASS_NAME)->select();
+    }
+
+    /**
+     * Transforms logs to the plain array.
+     *
+     * @return array An array of logs.
+     */
+    public function getLogsArray()
+    {
+        $result = array();
+        foreach ($this->getLogs() as $log) {
+            $result[] = $log->toArray();
+        }
+
+        return $result;
     }
 }
