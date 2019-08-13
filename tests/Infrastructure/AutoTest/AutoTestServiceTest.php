@@ -8,6 +8,7 @@ use Logeecom\Infrastructure\Http\DTO\OptionsDTO;
 use Logeecom\Infrastructure\Http\HttpClient;
 use Logeecom\Infrastructure\Logger\Interfaces\ShopLoggerAdapter;
 use Logeecom\Infrastructure\Logger\LogData;
+use Logeecom\Infrastructure\Logger\Logger;
 use Logeecom\Infrastructure\ORM\RepositoryRegistry;
 use Logeecom\Infrastructure\ServiceRegister;
 use Logeecom\Infrastructure\TaskExecution\QueueItem;
@@ -121,11 +122,21 @@ class AutoTestServiceTest extends BaseInfrastructureTestWithServices
         self::assertNotNull($queueItemId, 'Test task should be enqueued.');
 
         $status = $service->getAutoTestTaskStatus($queueItemId);
-        self::assertEquals('queued', $status, 'AutoTest tasks should be enqueued.');
+        self::assertEquals('queued', $status->taskStatus, 'AutoTest tasks should be enqueued.');
+        $logger = $this->shopLogger;
+        $service->stopAutoTestMode(
+            function () use ($logger) {
+                return $logger;
+            }
+        );
+        // starting auto-test should produce 2 logs. Additional logs should not be added to the auto-test logs.
+        Logger::logInfo('this should not be added to the log');
 
         $allLogs = AutoTestLogger::getInstance()->getLogs();
-
+        $allLogsArray = AutoTestLogger::getInstance()->getLogsArray();
         self::assertNotEmpty($allLogs, 'Starting logs should be added.');
+        self::assertCount(2, $allLogs, 'Additional logs should not be added.');
+        self::assertCount(count($allLogs), $allLogsArray, 'ToArray should produce the same number of items.');
         self::assertEquals('Start auto-test', $allLogs[0]->getMessage(), 'Starting logs should be added.');
 
         $context = $allLogs[1]->getContext();
