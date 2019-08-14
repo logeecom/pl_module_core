@@ -18,7 +18,7 @@ var Packlink = window.Packlink || {};
         let ajaxService = Packlink.ajaxService;
         let state = Packlink.state;
 
-        let isDashboardShowed = false;
+        let isDashboardShown = false;
 
         let selectedId = null;
 
@@ -54,7 +54,9 @@ var Packlink = window.Packlink || {};
 
         let renderedShippingMethods = [];
 
-        //Register public methods and variables.
+        let autoConfigureInitialized = false;
+
+        // Register public methods and variables.
         this.display = display;
 
         /**
@@ -115,8 +117,10 @@ var Packlink = window.Packlink || {};
                 ajaxService.get(configuration.getTaxClassesUrl, getTaxClassesSuccessHandler);
             }
 
-            ajaxService.get(configuration.getStatusUrl, getStatusHandler);
-            ajaxService.get(configuration.getAllUrl, getShippingMethodsHandler);
+            ajaxService.get(configuration.getStatusUrl, function (response) {
+                getStatusHandler(response);
+                ajaxService.get(configuration.getAllUrl, getShippingMethodsHandler);
+            });
         }
 
         /**
@@ -129,22 +133,31 @@ var Packlink = window.Packlink || {};
                 return;
             }
 
+            if (response.error) {
+                hideDashboardModal();
+                showNoShippingMethodsMessage();
+
+                return;
+            }
+
             for (let method of response) {
                 shippingMethods[method['id']] = method;
             }
 
             if (response.length === 0) {
-                if (!isDashboardShowed) {
-                    showNoShippingMethodsMessage();
+                if (!isDashboardShown) {
+                    showGettingShippingMethodsMessage();
                 }
 
-                setTimeout(function () {
-                    ajaxService.get(configuration.getAllUrl, getShippingMethodsHandler)
-                }, 1000);
+                setTimeout(
+                    function () {
+                        ajaxService.get(configuration.getAllUrl, getShippingMethodsHandler)
+                    },
+                    1000
+                );
             } else {
-                hideNoShippingMethodsMessage();
+                hideGettingShippingMethodsMessage();
             }
-
 
             renderShippingMethods();
 
@@ -156,19 +169,75 @@ var Packlink = window.Packlink || {};
         }
 
         /**
-         * Shows message when no shipping service is available.
+         * Shows message when getting shipping services.
          */
-        function showNoShippingMethodsMessage() {
+        function showGettingShippingMethodsMessage() {
             utilityService.enableInputMask();
-            templateService.getComponent('pl-no-shipping-services', extensionPoint).classList.remove('hidden');
+            templateService.getComponent('pl-getting-shipping-services', extensionPoint).classList.remove('hidden');
         }
 
         /**
-         * Hides message when shipping services are availbale.
+         * Hides message when shipping services are available.
+         */
+        function hideGettingShippingMethodsMessage() {
+            utilityService.disableInputMask();
+            templateService.getComponent('pl-getting-shipping-services', extensionPoint).classList.add('hidden');
+        }
+
+        /**
+         * Shows message when shipping services cannot be fetched.
+         */
+        function showNoShippingMethodsMessage() {
+            let container = templateService.getComponent('pl-no-shipping-services', extensionPoint);
+            utilityService.hideSpinner();
+            hideGettingShippingMethodsMessage();
+            if (container) {
+                container.classList.remove('hidden');
+                if (!autoConfigureInitialized) {
+                    initAutoConfigure(container);
+                }
+            }
+        }
+
+        /**
+         * Hides message when shipping services cannot be fetched.
          */
         function hideNoShippingMethodsMessage() {
-            utilityService.disableInputMask();
             templateService.getComponent('pl-no-shipping-services', extensionPoint).classList.add('hidden');
+            showGettingShippingMethodsMessage();
+        }
+
+        /**
+         * Initializes the auto-configure process.
+         *
+         * @param {Element} [container]
+         */
+        function initAutoConfigure(container) {
+            let configureButton = templateService.getComponent('pl-shipping-services-retry-btn', container);
+            if (configureButton && configuration.autoConfigureStartUrl) {
+                autoConfigureInitialized = true;
+                configureButton.addEventListener('click', startAutoConfigure);
+            }
+        }
+
+        /**
+         * Starts the auto-configure process.
+         */
+        function startAutoConfigure() {
+            hideNoShippingMethodsMessage();
+            ajaxService.post(
+                configuration.autoConfigureStartUrl,
+                function success(response) {
+                    if (response.success === true) {
+                        ajaxService.get(configuration.getAllUrl, getShippingMethodsHandler);
+                    } else {
+                        showNoShippingMethodsMessage();
+                    }
+                },
+                function error() {
+                    showNoShippingMethodsMessage();
+                }
+            );
         }
 
         /**
@@ -212,7 +281,6 @@ var Packlink = window.Packlink || {};
 
         /**
          * Adds static component to shipping methods page.
-         *
          *
          * @param {string} template
          * @param {string} point
@@ -593,8 +661,7 @@ var Packlink = window.Packlink || {};
             methodModel = utilityService.cloneObject(shippingMethods[id]);
             templateService.getComponent('pl-method-title-input', template).value = methodModel.name;
 
-            if (
-                configuration.hasTaxConfiguration
+            if (configuration.hasTaxConfiguration
                 && methodModel.taxClass !== null
                 && classExists(methodModel.taxClass)
             ) {
@@ -1435,13 +1502,13 @@ var Packlink = window.Packlink || {};
         /**
          * Checks whether tax class exists in system.
          *
-         * @param taxClass
+         * @param {string} taxClass
          *
          * @return {boolean}
          */
         function classExists(taxClass) {
-            for (taxClassValue of taxClasses) {
-                if (taxClassValue == taxClass) {
+            for (let taxClassValue of taxClasses) {
+                if (taxClassValue === taxClass) {
                     return true;
                 }
             }
@@ -1570,8 +1637,8 @@ var Packlink = window.Packlink || {};
          */
         function showDashboardModal() {
             templateService.getComponent('pl-dashboard-modal-wrapper', extensionPoint).classList.remove('hidden');
-            hideNoShippingMethodsMessage();
-            isDashboardShowed = true;
+            hideGettingShippingMethodsMessage();
+            isDashboardShown = true;
         }
 
         /**
@@ -1584,9 +1651,10 @@ var Packlink = window.Packlink || {};
 
             templateService.getComponent('pl-dashboard-modal-wrapper', extensionPoint).classList.add('hidden');
             if (Object.keys(shippingMethods).length === 0) {
-                showNoShippingMethodsMessage();
+                showGettingShippingMethodsMessage();
             }
-            isDashboardShowed = false;
+
+            isDashboardShown = false;
         }
     }
 

@@ -274,13 +274,11 @@ abstract class Configuration extends Singleton
     /**
      * Gets auto-configuration controller URL.
      *
-     * Method is not abstract because only modules that need this functionality should override this method.
-     *
      * @return string Auto-configuration URL.
      */
     public function getAutoConfigurationUrl()
     {
-        return null;
+        return $this->getAsyncProcessUrl('auto-configure');
     }
 
     /**
