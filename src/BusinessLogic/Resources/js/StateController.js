@@ -48,6 +48,7 @@ var Packlink = window.Packlink || {};
                 maxTitleLength: configuration.shippingServiceMaxTitleLength,
                 getShopShippingMethodCountUrl: configuration.shopShippingMethodCountGetUrl,
                 disableShopShippingMethodsUrl: configuration.shopShippingMethodsDisableUrl,
+                autoConfigureStartUrl: configuration.autoConfigureStartUrl,
                 hasTaxConfiguration: configuration.hasTaxConfiguration,
                 getTaxClassesUrl: configuration.shippingMethodsGetTaxClasses,
                 canDisplayCarrierLogos: configuration.canDisplayCarrierLogos
