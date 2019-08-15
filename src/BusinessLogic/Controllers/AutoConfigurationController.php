@@ -41,13 +41,13 @@ class AutoConfigurationController
         try {
             $success = $service->start();
             if ($success) {
-                /** @var TaskRunnerWakeup $wakeup */
-                $wakeup = ServiceRegister::getService(TaskRunnerWakeup::CLASS_NAME);
-                $wakeup->wakeup();
-
                 if ($enqueueTask) {
                     $this->enqueueUpdateServicesTask($configService);
                 }
+
+                /** @var TaskRunnerWakeup $wakeup */
+                $wakeup = ServiceRegister::getService(TaskRunnerWakeup::CLASS_NAME);
+                $wakeup->wakeup();
             }
         } catch (BaseException $e) {
             $success = false;
@@ -71,11 +71,13 @@ class AutoConfigurationController
         $filter->where('taskType', Operators::EQUALS, 'UpdateShippingServicesTask');
         $filter->where('status', Operators::EQUALS, QueueItem::QUEUED);
         $item = $repo->selectOne($filter);
-        if (!$item) {
-            // enqueue the task for updating shipping services
-            /** @var QueueService $queueService */
-            $queueService = ServiceRegister::getService(QueueService::CLASS_NAME);
-            $queueService->enqueue($configService->getDefaultQueueName(), new UpdateShippingServicesTask());
+        if ($item) {
+            $repo->delete($item);
         }
+
+        // enqueue the task for updating shipping services
+        /** @var QueueService $queueService */
+        $queueService = ServiceRegister::getService(QueueService::CLASS_NAME);
+        $queueService->enqueue($configService->getDefaultQueueName(), new UpdateShippingServicesTask());
     }
 }
