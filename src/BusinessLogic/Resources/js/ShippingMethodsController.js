@@ -227,6 +227,7 @@ var Packlink = window.Packlink || {};
             hideNoShippingMethodsMessage();
             ajaxService.post(
                 configuration.autoConfigureStartUrl,
+                [],
                 function success(response) {
                     if (response.success === true) {
                         ajaxService.get(configuration.getAllUrl, getShippingMethodsHandler);
@@ -1120,6 +1121,7 @@ var Packlink = window.Packlink || {};
             let index = parseInt(event.target.getAttribute('data-pl-to-id'));
             let value = event.target.value;
             let numericValue = parseFloat(value);
+            // noinspection EqualityComparisonWithCoercionJS
             methodModel[policy][index].to = event.target.value == numericValue ? numericValue : value;
 
             if (value !== '' && !isNaN(value)) {
@@ -1174,6 +1176,7 @@ var Packlink = window.Packlink || {};
             let index = parseInt(event.target.getAttribute('data-pl-amount-id'));
             let numeric = parseFloat(event.target.value);
 
+            // noinspection EqualityComparisonWithCoercionJS
             methodModel[policy][index].amount = event.target.value == numeric ? numeric : event.target.value;
             templateService.removeError(event.target);
             displayFixedPricesSubForm(index === methodModel[policy].length - 1, false, false, false, byWeight);
@@ -1220,6 +1223,7 @@ var Packlink = window.Packlink || {};
         function validateFixedPriceField(fieldName, last, index, lowerBound) {
             let input = templateService.getComponent('data-pl-' + fieldName + '-id', tableExtensionPoint, index);
             let result = true;
+            // noinspection EqualityComparisonWithCoercionJS
             if (last[fieldName] === ''
                 || isNaN(last[fieldName])
                 || typeof last[fieldName] !== 'number'
@@ -1309,12 +1313,14 @@ var Packlink = window.Packlink || {};
 
             for (let i = 0; i < policies.length; i++) {
                 let current = policies[i];
+                // noinspection EqualityComparisonWithCoercionJS
                 if (current.to && current.to != current.to.toFixed(2)) {
                     let input = templateService.getComponent('data-pl-to-id', tableExtensionPoint, i);
                     templateService.setError(input, Packlink.errorMsgs.numberOfDecimalPlaces);
                     result = false;
                 }
 
+                // noinspection EqualityComparisonWithCoercionJS
                 if (current.amount && current.amount != current.amount.toFixed(2)) {
                     let input = templateService.getComponent('data-pl-amount-id', tableExtensionPoint, i);
                     templateService.setError(input, Packlink.errorMsgs.numberOfDecimalPlaces);
@@ -1421,6 +1427,7 @@ var Packlink = window.Packlink || {};
         function handlePercentInputBlurEvent(event) {
             let value = event.target.value;
             let numeric = parseFloat(value);
+            // noinspection EqualityComparisonWithCoercionJS
             methodModel.percentPricePolicy.amount = value == numeric ? numeric : value;
 
             if (value === ''

@@ -154,7 +154,7 @@ class AutoTestService
             $options[$option->getName()] = $option->getValue();
         }
 
-        Logger::logInfo('HTTP configuration options', 'Core', array('HTTPOptions' => $options));
+        Logger::logInfo('HTTP configuration options', 'Core', array($testDomain => array('HTTPOptions' => $options)));
     }
 
     /**

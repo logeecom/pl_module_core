@@ -114,10 +114,8 @@ class AutoTestServiceTest extends BaseInfrastructureTestWithServices
     public function testStartAutoTestSuccess()
     {
         RepositoryRegistry::registerRepository(LogData::getClassName(), MemoryRepository::getClassName());
-        $this->shopConfig->setHttpConfigurationOptions(
-            parse_url($this->shopConfig->getAsyncProcessUrl(''), PHP_URL_HOST),
-            array(new OptionsDTO('test', 'value'))
-        );
+        $domain = parse_url($this->shopConfig->getAsyncProcessUrl(''), PHP_URL_HOST);
+        $this->shopConfig->setHttpConfigurationOptions($domain, array(new OptionsDTO('test', 'value')));
 
         $service = new AutoTestService();
         $queueItemId = $service->startAutoTest();
@@ -144,13 +142,16 @@ class AutoTestServiceTest extends BaseInfrastructureTestWithServices
 
         $context = $allLogs[1]->getContext();
         self::assertCount(1, $context, 'Current HTTP configuration options should be logged.');
-        self::assertEquals(
+        self::assertEquals($domain, $context[0]->getName(), 'Current HTTP configuration options should be logged.');
+
+        $options = $context[0]->getValue();
+        self::assertArrayHasKey(
             'HTTPOptions',
-            $context[0]->getName(),
+            $options,
             'Current HTTP configuration options should be logged.'
         );
 
-        self::assertCount(1, $context[0]->getValue(), 'One HTTP configuration options should be set.');
+        self::assertCount(1, $options, 'One HTTP configuration options should be set.');
     }
 
     /**
