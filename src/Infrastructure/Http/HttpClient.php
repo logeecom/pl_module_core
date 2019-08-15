@@ -52,6 +52,12 @@ abstract class HttpClient
      */
     const HTTP_METHOD_PATCH = 'PATCH';
     /**
+     * Indicates if the instance is currently in the auto-configuration mode.
+     *
+     * @var bool
+     */
+    protected $autoConfigurationMode = false;
+    /**
      * Configuration service.
      *
      * @var Configuration
@@ -143,20 +149,26 @@ abstract class HttpClient
      */
     public function autoConfigure($method, $url, $headers = array(), $body = '')
     {
+        $this->autoConfigurationMode = true;
         if ($this->isRequestSuccessful($method, $url, $headers, $body)) {
             return true;
         }
 
-        $combinations = $this->getAutoConfigurationOptionsCombinations();
+        $domain = parse_url($url, PHP_URL_HOST);
+        $combinations = $this->getAutoConfigurationOptionsCombinations($method, $url);
         foreach ($combinations as $combination) {
-            $this->setAdditionalOptions($combination);
+            $this->setAdditionalOptions($domain, $combination);
             if ($this->isRequestSuccessful($method, $url, $headers, $body)) {
+                $this->autoConfigurationMode = false;
+
                 return true;
             }
 
             // if request is not successful, reset options combination.
-            $this->resetAdditionalOptions();
+            $this->resetAdditionalOptions($domain);
         }
+
+        $this->autoConfigurationMode = false;
 
         return false;
     }
@@ -187,12 +199,15 @@ abstract class HttpClient
     abstract protected function sendHttpRequestAsync($method, $url, $headers = array(), $body = '');
 
     /**
-     * Get additional options combinations for request.
+     * Get additional options combinations for specified method and url.
+     *
+     * @param string $method HTTP method (GET, POST, PUT, DELETE etc.)
+     * @param string $url Request URL.
      *
      * @return array
      *  Array of additional options combinations. Each array item should be an array of OptionsDTO instances.
      */
-    protected function getAutoConfigurationOptionsCombinations()
+    protected function getAutoConfigurationOptionsCombinations($method, $url)
     {
         // Left blank intentionally so specific implementations can override this method,
         // in order to return all possible combinations for additional HTTP options
@@ -202,30 +217,35 @@ abstract class HttpClient
     /**
      * Save additional options for request.
      *
+     * @param string $domain A domain for which to reset configuration options.
      * @param OptionsDTO[] $options Additional option to add to HTTP request.
      */
-    protected function setAdditionalOptions($options)
+    protected function setAdditionalOptions($domain, $options)
     {
-        $this->getConfigService()->setHttpConfigurationOptions($options);
+        $this->getConfigService()->setHttpConfigurationOptions($domain, $options);
     }
 
     /**
      * Reset additional options for request to default value.
+     *
+     * @param string $domain A domain for which to reset configuration options.
      */
-    protected function resetAdditionalOptions()
+    protected function resetAdditionalOptions($domain)
     {
-        $this->getConfigService()->setHttpConfigurationOptions(array());
+        $this->getConfigService()->setHttpConfigurationOptions($domain, array());
     }
 
     /**
      * Gets HTTP options array from the configuration and transforms it to the key-value array.
      *
+     * @param string $domain A domain for which to get configuration options.
+     *
      * @return array A key-value array of HTTP configuration options.
      */
-    protected function getAdditionalOptions()
+    protected function getAdditionalOptions($domain)
     {
         if (!$this->httpConfigurationOptions) {
-            $options = $this->getConfigService()->getHttpConfigurationOptions();
+            $options = $this->getConfigService()->getHttpConfigurationOptions($domain);
             $this->httpConfigurationOptions = array();
             foreach ($options as $option) {
                 $this->httpConfigurationOptions[$option->getName()] = $option->getValue();

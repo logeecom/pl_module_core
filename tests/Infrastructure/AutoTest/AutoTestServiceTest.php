@@ -114,7 +114,10 @@ class AutoTestServiceTest extends BaseInfrastructureTestWithServices
     public function testStartAutoTestSuccess()
     {
         RepositoryRegistry::registerRepository(LogData::getClassName(), MemoryRepository::getClassName());
-        $this->shopConfig->setHttpConfigurationOptions(array(new OptionsDTO('test', 'value')));
+        $this->shopConfig->setHttpConfigurationOptions(
+            parse_url($this->shopConfig->getAsyncProcessUrl(''), PHP_URL_HOST),
+            array(new OptionsDTO('test', 'value'))
+        );
 
         $service = new AutoTestService();
         $queueItemId = $service->startAutoTest();
@@ -148,11 +151,6 @@ class AutoTestServiceTest extends BaseInfrastructureTestWithServices
         );
 
         self::assertCount(1, $context[0]->getValue(), 'One HTTP configuration options should be set.');
-        self::assertInstanceOf(
-            'Logeecom\\Infrastructure\\Http\\DTO\\OptionsDTO',
-            current($context[0]->getValue()),
-            'Log context should have the instance of OptionsDTOCurrent HTTP configuration options should be logged.'
-        );
     }
 
     /**

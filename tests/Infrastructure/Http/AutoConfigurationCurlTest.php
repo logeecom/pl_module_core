@@ -1,5 +1,7 @@
 <?php
 
+/** @noinspection PhpMissingDocCommentInspection */
+
 namespace Logeecom\Tests\Infrastructure\Http;
 
 use Logeecom\Infrastructure\Http\AutoConfiguration;
@@ -65,7 +67,7 @@ class AutoConfigurationCurlTest extends BaseInfrastructureTestWithServices
             $this->httpClient->setAdditionalOptionsCallHistory,
             'Set additional options should not be called'
         );
-        $this->assertEmpty($this->shopConfig->getHttpConfigurationOptions(), 'Additional options should remain empty');
+        $this->assertEmpty($this->getHttpConfigurationOptions(), 'Additional options should remain empty');
         $this->assertEquals(AutoConfiguration::STATE_SUCCEEDED, $controller->getState());
     }
 
@@ -92,7 +94,7 @@ class AutoConfigurationCurlTest extends BaseInfrastructureTestWithServices
         );
         $this->assertEquals(
             $additionalOptionsCombination,
-            $this->shopConfig->getHttpConfigurationOptions(),
+            $this->getHttpConfigurationOptions(),
             'Additional options should be set to first combination'
         );
         $setOptions = $this->httpClient->getCurlOptions();
@@ -127,13 +129,13 @@ class AutoConfigurationCurlTest extends BaseInfrastructureTestWithServices
         $this->assertTrue($success, 'Auto-configure must be successful if request passed with some combination.');
         $this->assertCount(
             7,
-            $this->httpClient->setAdditionalOptionsCallHistory,
+            $this->httpClient->setAdditionalOptionsCallHistory['example.com'],
             'Set additional options should be called seven times'
         );
         $this->assertCount(8, $this->httpClient->getHistory(), 'There should be seven calls');
         $this->assertEquals(
             $additionalOptionsCombination,
-            $this->shopConfig->getHttpConfigurationOptions(),
+            $this->getHttpConfigurationOptions(),
             'Additional options should be set to first combination'
         );
         $setOptions = $this->httpClient->getCurlOptions();
@@ -162,11 +164,11 @@ class AutoConfigurationCurlTest extends BaseInfrastructureTestWithServices
         $this->assertFalse($success, 'Auto-configure must failed if no combination resulted with request passed.');
         $this->assertCount(
             7,
-            $this->httpClient->setAdditionalOptionsCallHistory,
-            'Set additional options should be called twice'
+            $this->httpClient->setAdditionalOptionsCallHistory['example.com'],
+            'Set additional options should be called seven times'
         );
         $this->assertEmpty(
-            $this->shopConfig->getHttpConfigurationOptions(),
+            $this->getHttpConfigurationOptions(),
             'Reset additional options method should be called and additional options should be empty.'
         );
     }
@@ -182,12 +184,50 @@ class AutoConfigurationCurlTest extends BaseInfrastructureTestWithServices
         $this->assertFalse($success, 'Auto-configure must failed if no combination resulted with request passed.');
         $this->assertCount(
             7,
-            $this->httpClient->setAdditionalOptionsCallHistory,
-            'Set additional options should be called twice'
+            $this->httpClient->setAdditionalOptionsCallHistory['example.com'],
+            'Set additional options should be called seven times'
         );
         $this->assertEmpty(
-            $this->shopConfig->getHttpConfigurationOptions(),
+            $this->getHttpConfigurationOptions(),
             'Reset additional options method should be called and additional options should be empty.'
+        );
+    }
+
+    /**
+     * Tests setting and resetting HTTP options for different domains.
+     */
+    public function testHttpOptionsForDifferentDomains()
+    {
+        $responses = array(
+            $this->getResponse(400),
+            $this->getResponse(200),
+        );
+        $this->httpClient->setMockResponses($responses);
+
+        $controller = new AutoConfiguration($this->shopConfig, $this->httpClient);
+        $controller->start();
+
+        $this->shopConfig->setAutoConfigurationUrl('https://anotherdomain.com/test.php');
+        $responses = array(
+            $this->getResponse(400),
+            $this->getResponse(400),
+            $this->getResponse(200),
+        );
+        $this->httpClient->setMockResponses($responses);
+        $controller->start();
+
+        $firstDomainOptions = $this->shopConfig->getHttpConfigurationOptions('example.com');
+        $this->assertCount(1, $firstDomainOptions);
+        $this->assertEquals(CurlHttpClient::SWITCH_PROTOCOL, $firstDomainOptions[0]->getName());
+
+        $secondDomainOptions = $this->shopConfig->getHttpConfigurationOptions('anotherdomain.com');
+        $this->assertCount(1, $secondDomainOptions);
+        $this->assertEquals(CURLOPT_FOLLOWLOCATION, $secondDomainOptions[0]->getName());
+
+        $this->assertCount(
+            2,
+            $this->httpClient->setAdditionalOptionsCallHistory,
+            'Set additional options should be called for 2 domains'
         );
     }
 
@@ -209,5 +249,12 @@ X-Custom-Header: Content: database\r
 \r
 {\"status\":\"success\"}",
         );
+    }
+
+    private function getHttpConfigurationOptions()
+    {
+        $domain = parse_url($this->shopConfig->getAutoConfigurationUrl(), PHP_URL_HOST);
+
+        return $this->shopConfig->getHttpConfigurationOptions($domain);
     }
 }
