@@ -44,6 +44,8 @@ class AutoTestLogger extends Singleton implements ShopLoggerAdapter
      * Transforms logs to the plain array.
      *
      * @return array An array of logs.
+     *
+     * @throws \Logeecom\Infrastructure\ORM\Exceptions\RepositoryNotRegisteredException
      */
     public function getLogsArray()
     {

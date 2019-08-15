@@ -1,4 +1,7 @@
 <?php
+/** @noinspection PhpUnused */
+
+/** @noinspection PhpMissingDocCommentInspection */
 
 namespace Logeecom\Tests\Infrastructure\Common\TestComponents;
 
@@ -81,7 +84,7 @@ class TestHttpClient extends HttpClient
     /**
      * @inheritdoc
      */
-    protected function getAutoConfigurationOptionsCombinations()
+    protected function getAutoConfigurationOptionsCombinations($method, $url)
     {
         if (empty($this->autoConfigurationCombinations)) {
             $this->setAdditionalOptionsCombinations(
@@ -106,18 +109,23 @@ class TestHttpClient extends HttpClient
     }
 
     /**
-     * @inheritdoc
+     * Save additional options for request.
+     *
+     * @param string $domain A domain for which to reset configuration options.
+     * @param OptionsDTO[] $options Additional option to add to HTTP request.
      */
-    protected function setAdditionalOptions($options)
+    protected function setAdditionalOptions($domain, $options)
     {
         $this->setAdditionalOptionsCallHistory[] = $options;
         $this->additionalOptions = $options;
     }
 
     /**
-     * @inheritdoc
+     * Reset additional options for request to default value.
+     *
+     * @param string $domain A domain for which to reset configuration options.
      */
-    protected function resetAdditionalOptions()
+    protected function resetAdditionalOptions($domain)
     {
         $this->additionalOptions = array();
     }

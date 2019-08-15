@@ -1,4 +1,5 @@
 <?php
+/** @noinspection PhpMissingDocCommentInspection */
 
 namespace Logeecom\Tests\Infrastructure\Common\TestComponents;
 
@@ -99,10 +100,10 @@ class TestCurlHttpClient extends CurlHttpClient
     /**
      * @inheritdoc
      */
-    protected function setAdditionalOptions($options)
+    protected function setAdditionalOptions($domain, $options)
     {
-        parent::setAdditionalOptions($options);
-        $this->setAdditionalOptionsCallHistory[] = $options;
+        parent::setAdditionalOptions($domain, $options);
+        $this->setAdditionalOptionsCallHistory[$domain][] = $options;
     }
 
     /**

@@ -301,12 +301,23 @@ class CurlHttpClient extends HttpClient
      */
     protected function setCurlSessionOptionsFromConfiguration()
     {
-        $options = $this->getAdditionalOptions();
+        $domain = parse_url($this->curlOptions[CURLOPT_URL], PHP_URL_HOST);
+        $options = $this->getAdditionalOptions($domain);
         foreach ($options as $key => $value) {
             if ($key !== self::SWITCH_PROTOCOL) {
                 $this->curlOptions[$key] = $value;
             }
         }
+    }
+
+    /**
+     * Executes cURL request and returns response and status code.
+     *
+     * @return array Array with plain response as the first item and status code as the second item.
+     */
+    protected function executeCurlRequest()
+    {
+        return array(curl_exec($this->curlSession), curl_getinfo($this->curlSession, CURLINFO_HTTP_CODE));
     }
 
     /**
@@ -353,10 +364,13 @@ class CurlHttpClient extends HttpClient
     /**
      * Get additional options combinations for request.
      *
+     * @param string $method HTTP method (GET, POST, PUT, DELETE etc.)
+     * @param string $url Request URL. Full URL where request should be sent.
+     *
      * @return array
      *  Array of additional options combinations. Each array item should be an array of OptionsDTO instances.
      */
-    protected function getAutoConfigurationOptionsCombinations()
+    protected function getAutoConfigurationOptionsCombinations($method, $url)
     {
         /**
          * Combinations to use:
@@ -396,8 +410,9 @@ class CurlHttpClient extends HttpClient
      */
     protected function adjustUrlIfNeeded($url)
     {
-        $options = $this->getAdditionalOptions();
-        if (isset($options[self::SWITCH_PROTOCOL])) {
+        $domain = parse_url($url, PHP_URL_HOST);
+        $options = $this->getAdditionalOptions($domain);
+        if (!empty($options[self::SWITCH_PROTOCOL])) {
             if (strpos($url, 'http:') === 0) {
                 $url = str_replace('http:', 'https:', $url);
             } else {
@@ -406,16 +421,6 @@ class CurlHttpClient extends HttpClient
         }
 
         return $url;
-    }
-
-    /**
-     * Executes cURL request and returns response and status code.
-     *
-     * @return array Array with plain response as the first item and status code as the second item.
-     */
-    protected function executeCurlRequest()
-    {
-        return array(curl_exec($this->curlSession), curl_getinfo($this->curlSession, CURLINFO_HTTP_CODE));
     }
 
     /**

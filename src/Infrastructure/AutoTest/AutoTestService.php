@@ -46,11 +46,7 @@ class AutoTestService
             throw new StorageNotAccessibleException('Cannot start the auto-test because storage is not accessible.');
         }
 
-        Logger::logInfo(
-            'HTTP configuration options',
-            'Core',
-            array('HTTPOptions' => $this->getConfigService()->getHttpConfigurationOptions())
-        );
+        $this->logHttpOptions();
 
         /** @var QueueService $queueService */
         $queueService = ServiceRegister::getService(QueueService::CLASS_NAME);
@@ -145,6 +141,20 @@ class AutoTestService
         foreach ($logs as $log) {
             $repo->delete($log);
         }
+    }
+
+    /**
+     * Logs current HTTP configuration options.
+     */
+    protected function logHttpOptions()
+    {
+        $testDomain = parse_url($this->getConfigService()->getAsyncProcessUrl(''), PHP_URL_HOST);
+        $options = array();
+        foreach ($this->getConfigService()->getHttpConfigurationOptions($testDomain) as $option) {
+            $options[$option->getName()] = $option->getValue();
+        }
+
+        Logger::logInfo('HTTP configuration options', 'Core', array('HTTPOptions' => $options));
     }
 
     /**

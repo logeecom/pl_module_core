@@ -292,27 +292,36 @@ abstract class Configuration extends Singleton
     }
 
     /**
-     * Gets current http configuration options.
+     * Gets current HTTP configuration options for given domain.
+     *
+     * @param string $domain A domain for which to return configuration options.
      *
      * @return \Logeecom\Infrastructure\Http\DTO\OptionsDTO[]
      */
-    public function getHttpConfigurationOptions()
+    public function getHttpConfigurationOptions($domain)
     {
         $data = json_decode($this->getConfigValue('httpConfigurationOptions', '[]'), true);
+        if (isset($data[$domain])) {
+            return OptionsDTO::fromArrayBatch($data[$domain]);
+        }
 
-        return OptionsDTO::fromArrayBatch($data);
+        return array();
     }
 
     /**
-     * Sets http configuration options.
+     * Sets HTTP configuration options for given domain.
+     *
+     * @param string $domain A domain for which to save configuration options.
      *
      * @param OptionsDTO[] $options HTTP configuration options
      */
-    public function setHttpConfigurationOptions(array $options)
+    public function setHttpConfigurationOptions($domain, array $options)
     {
-        $data = array();
+        // get all current options and append new ones for given domain
+        $data = json_decode($this->getConfigValue('httpConfigurationOptions', '[]'), true);
+        $data[$domain] = array();
         foreach ($options as $option) {
-            $data[] = $option->toArray();
+            $data[$domain][] = $option->toArray();
         }
 
         $this->saveConfigValue('httpConfigurationOptions', json_encode($data));
