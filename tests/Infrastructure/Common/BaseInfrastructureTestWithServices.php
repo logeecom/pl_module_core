@@ -37,7 +37,7 @@ abstract class BaseInfrastructureTestWithServices extends TestCase
      */
     public $shopLogger;
     /**
-     * @var TimeProvider
+     * @var TestTimeProvider
      */
     public $timeProvider;
     /**
