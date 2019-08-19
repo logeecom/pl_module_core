@@ -103,15 +103,47 @@ class AutoConfigurationControllerTest extends BaseInfrastructureTestWithServices
         $controller = new AutoConfigurationController();
         $controller->start(true);
 
-        $repo = RepositoryRegistry::getQueueItemRepository();
-        $filter = new QueryFilter();
-        $filter->where('taskType', Operators::EQUALS, 'UpdateShippingServicesTask');
-        $filter->where('status', Operators::EQUALS, QueueItem::QUEUED);
-        $this->assertNotNull($repo->selectOne($filter));
+        $success = $controller->isGettingServicesTaskSuccessful();
+        $this->assertTrue($success);
     }
 
     /**
-     * Test auto-configure to be successful with default options
+     * Test auto-configure to be started, but task expired.
+     */
+    public function testAutoConfigureEnqueuedTaskExpired()
+    {
+        $response = $this->getResponse(200);
+        $this->httpClient->setMockResponses(array($response));
+
+        $controller = new AutoConfigurationController();
+        $controller->start(true);
+
+        $this->timeProvider->setCurrentLocalTime(new \DateTime('now +10 minutes'));
+        $success = $controller->isGettingServicesTaskSuccessful();
+
+        $this->assertFalse($success);
+    }
+
+    /**
+     * Test auto-configure to be started, but task failed.
+     */
+    public function testAutoConfigureEnqueuedTaskFailed()
+    {
+        $success = $this->startAutoConfigureAndSetTaskStatus(QueueItem::FAILED);
+        $this->assertFalse($success);
+    }
+
+    /**
+     * Test auto-configure to be started and task completed.
+     */
+    public function testAutoConfigureEnqueuedTaskCompleted()
+    {
+        $success = $this->startAutoConfigureAndSetTaskStatus(QueueItem::COMPLETED);
+        $this->assertTrue($success);
+    }
+
+    /**
+     * Test auto-configure to fail to start.
      */
     public function testAutoConfigureFailed()
     {
@@ -122,6 +154,24 @@ class AutoConfigurationControllerTest extends BaseInfrastructureTestWithServices
         $success = $controller->start();
 
         $this->assertFalse($success);
+    }
+
+    private function startAutoConfigureAndSetTaskStatus($taskStatus)
+    {
+        $response = $this->getResponse(200);
+        $this->httpClient->setMockResponses(array($response));
+
+        $controller = new AutoConfigurationController();
+        $controller->start(true);
+        $repo = RepositoryRegistry::getQueueItemRepository();
+        $filter = new QueryFilter();
+        $filter->where('taskType', Operators::EQUALS, 'UpdateShippingServicesTask');
+        $filter->where('status', Operators::EQUALS, QueueItem::QUEUED);
+        $queueItem = $repo->selectOne($filter);
+        $queueItem->setStatus($taskStatus);
+        $repo->update($queueItem);
+
+        return $controller->isGettingServicesTaskSuccessful();
     }
 
     private function getResponse($code)
