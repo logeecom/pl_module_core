@@ -39,7 +39,7 @@ class AutoTestService
     public function startAutoTest()
     {
         try {
-            $this->setAutoTestMode();
+            $this->setAutoTestMode(true);
             $this->deletePreviousLogs();
             Logger::logInfo('Start auto-test');
         } catch (\Exception $e) {
@@ -57,8 +57,10 @@ class AutoTestService
 
     /**
      * Activates the auto-test mode and registers the necessary components.
+     *
+     * @param bool $persist Indicates whether to store the mode change in configuration.
      */
-    public function setAutoTestMode()
+    public function setAutoTestMode($persist = false)
     {
         Logger::resetInstance();
         ServiceRegister::registerService(
@@ -68,7 +70,9 @@ class AutoTestService
             }
         );
 
-        $this->getConfigService()->setAutoTestMode(true);
+        if ($persist) {
+            $this->getConfigService()->setAutoTestMode(true);
+        }
     }
 
     /**
