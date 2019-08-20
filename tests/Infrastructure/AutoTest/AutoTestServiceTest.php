@@ -92,7 +92,7 @@ class AutoTestServiceTest extends BaseInfrastructureTestWithServices
     {
         RepositoryRegistry::registerRepository(LogData::getClassName(), MemoryRepository::getClassName());
         $service = new AutoTestService();
-        $service->setAutoTestMode();
+        $service->setAutoTestMode(true);
 
         $repo = RepositoryRegistry::getRepository(LogData::getClassName());
         self::assertNotNull($repo, 'Log repository should be registered.');
