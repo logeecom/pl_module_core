@@ -117,10 +117,41 @@ var Packlink = window.Packlink || {};
                 ajaxService.get(configuration.getTaxClassesUrl, getTaxClassesSuccessHandler);
             }
 
-            ajaxService.get(configuration.getStatusUrl, function (response) {
+            ajaxService.get(configuration.getDashboardStatusUrl, function (response) {
                 getStatusHandler(response);
-                ajaxService.get(configuration.getAllUrl, getShippingMethodsHandler);
+                ajaxService.get(configuration.getMethodsStatusUrl, getShippingMethodsStatusHandler);
             });
+        }
+
+        /**
+         * Get status of getting shipping methods task.
+         *
+         * @param {object} response
+         */
+        function getShippingMethodsStatusHandler(response) {
+            if (configuration.context !== state.getContext()) {
+                return;
+            }
+
+            if (response.status === 'completed') {
+                ajaxService.get(configuration.getAllMethodsUrl, getShippingMethodsHandler);
+
+                return;
+            }
+
+            if (response.status === 'failed') {
+                hideDashboardModal();
+                showNoShippingMethodsMessage();
+
+                return;
+            }
+
+            setTimeout(
+                function () {
+                    ajaxService.get(configuration.getMethodsStatusUrl, getShippingMethodsStatusHandler);
+                },
+                1000
+            );
         }
 
         /**
@@ -133,32 +164,18 @@ var Packlink = window.Packlink || {};
                 return;
             }
 
-            if (response.error) {
+            for (let method of response) {
+                shippingMethods[method['id']] = method;
+            }
+
+            if (response.length === 0) {
                 hideDashboardModal();
                 showNoShippingMethodsMessage();
 
                 return;
             }
 
-            for (let method of response) {
-                shippingMethods[method['id']] = method;
-            }
-
-            if (response.length === 0) {
-                if (!isDashboardShown) {
-                    showGettingShippingMethodsMessage();
-                }
-
-                setTimeout(
-                    function () {
-                        ajaxService.get(configuration.getAllUrl, getShippingMethodsHandler)
-                    },
-                    1000
-                );
-            } else {
-                hideGettingShippingMethodsMessage();
-            }
-
+            hideGettingShippingMethodsMessage();
             renderShippingMethods();
 
             if (spinnerBarrier === spinnerBarrierCount) {
