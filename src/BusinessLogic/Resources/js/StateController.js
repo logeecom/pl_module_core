@@ -38,8 +38,9 @@ var Packlink = window.Packlink || {};
                 searchPostalCodesUrl: configuration.defaultWarehouseSearchPostalCodesUrl
             },
             'shipping-methods': {
-                getStatusUrl: configuration.dashboardGetStatusUrl,
-                getAllUrl: configuration.shippingMethodsGetAllUrl,
+                getDashboardStatusUrl: configuration.dashboardGetStatusUrl,
+                getAllMethodsUrl: configuration.shippingMethodsGetAllUrl,
+                getMethodsStatusUrl: configuration.shippingMethodsGetStatusUrl,
                 activateUrl: configuration.shippingMethodsActivateUrl,
                 deactivateUrl: configuration.shippingMethodsDeactivateUrl,
                 saveUrl: configuration.shippingMethodsSaveUrl,
@@ -59,8 +60,8 @@ var Packlink = window.Packlink || {};
                 saveUrl: configuration.orderStatusMappingsSaveUrl
             },
             'footer': {
-                getStatusUrl: configuration.debugGetStatusUrl,
-                setStatusUrl: configuration.debugSetStatusUrl
+                getDebugStatusUrl: configuration.debugGetStatusUrl,
+                setDebugStatusUrl: configuration.debugSetStatusUrl
             }
         };
 

@@ -18,6 +18,7 @@ use Logeecom\Tests\Infrastructure\Common\TestComponents\TestCurlHttpClient;
 use Logeecom\Tests\Infrastructure\Common\TestComponents\TestHttpClient;
 use Logeecom\Tests\Infrastructure\Common\TestServiceRegister;
 use Packlink\BusinessLogic\Controllers\AutoConfigurationController;
+use Packlink\BusinessLogic\Controllers\UpdateShippingServicesTaskStatusController;
 
 /**
  * Class AutoConfigurationControllerTest.
@@ -103,8 +104,9 @@ class AutoConfigurationControllerTest extends BaseInfrastructureTestWithServices
         $controller = new AutoConfigurationController();
         $controller->start(true);
 
-        $success = $controller->isGettingServicesTaskSuccessful();
-        $this->assertTrue($success);
+        $taskController = new UpdateShippingServicesTaskStatusController();
+        $status = $taskController->getLastTaskStatus();
+        $this->assertNotEquals(QueueItem::FAILED, $status);
     }
 
     /**
@@ -119,9 +121,10 @@ class AutoConfigurationControllerTest extends BaseInfrastructureTestWithServices
         $controller->start(true);
 
         $this->timeProvider->setCurrentLocalTime(new \DateTime('now +10 minutes'));
-        $success = $controller->isGettingServicesTaskSuccessful();
+        $taskController = new UpdateShippingServicesTaskStatusController();
+        $status = $taskController->getLastTaskStatus();
 
-        $this->assertFalse($success);
+        $this->assertEquals(QueueItem::FAILED, $status);
     }
 
     /**
@@ -129,8 +132,8 @@ class AutoConfigurationControllerTest extends BaseInfrastructureTestWithServices
      */
     public function testAutoConfigureEnqueuedTaskFailed()
     {
-        $success = $this->startAutoConfigureAndSetTaskStatus(QueueItem::FAILED);
-        $this->assertFalse($success);
+        $status = $this->startAutoConfigureAndSetTaskStatus(QueueItem::FAILED);
+        $this->assertEquals(QueueItem::FAILED, $status);
     }
 
     /**
@@ -138,8 +141,8 @@ class AutoConfigurationControllerTest extends BaseInfrastructureTestWithServices
      */
     public function testAutoConfigureEnqueuedTaskCompleted()
     {
-        $success = $this->startAutoConfigureAndSetTaskStatus(QueueItem::COMPLETED);
-        $this->assertTrue($success);
+        $status = $this->startAutoConfigureAndSetTaskStatus(QueueItem::COMPLETED);
+        $this->assertEquals(QueueItem::COMPLETED, $status);
     }
 
     /**
@@ -171,7 +174,9 @@ class AutoConfigurationControllerTest extends BaseInfrastructureTestWithServices
         $queueItem->setStatus($taskStatus);
         $repo->update($queueItem);
 
-        return $controller->isGettingServicesTaskSuccessful();
+        $taskController = new UpdateShippingServicesTaskStatusController();
+
+        return $taskController->getLastTaskStatus();
     }
 
     private function getResponse($code)
