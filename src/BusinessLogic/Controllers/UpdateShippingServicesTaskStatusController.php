@@ -50,7 +50,7 @@ class UpdateShippingServicesTaskStatusController
             $taskTimestamp = $item->getLastUpdateTimestamp() ?: $item->getQueueTimestamp();
             $expired = $taskTimestamp + $item->getTask()->getMaxInactivityPeriod() < $currentTimestamp;
 
-            return $expired ? QueueItem::FAILED : QueueItem::IN_PROGRESS;
+            return $expired ? QueueItem::FAILED : $status;
         }
 
         return QueueItem::FAILED;

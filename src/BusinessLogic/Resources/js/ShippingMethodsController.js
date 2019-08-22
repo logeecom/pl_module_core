@@ -27,7 +27,14 @@ var Packlink = window.Packlink || {};
         let spinnerBarrierCount = 0;
         let spinnerBarrier = configuration.hasTaxConfiguration ? 2 : 1;
 
+        /** @var {{parcelSet, warehouseSet, shippingMethodSet}} dashboardData */
         let dashboardData = {};
+
+        /**
+         * @var {{id, name, title, logoUrl, taxClass, deliveryDescription, showLogo, deliveryType,
+         * parcelDestination, parcelOrigin, selected,
+         * pricePolicy, fixedPriceByWeightPolicy, fixedPriceByValuePolicy, percentPricePolicy}} methodModel
+         */
         let methodModel = {};
         let taxClasses = [];
 
@@ -247,7 +254,7 @@ var Packlink = window.Packlink || {};
                 [],
                 function success(response) {
                     if (response.success === true) {
-                        ajaxService.get(configuration.getAllUrl, getShippingMethodsHandler);
+                        ajaxService.get(configuration.getMethodsStatusUrl, getShippingMethodsStatusHandler);
                     } else {
                         showNoShippingMethodsMessage();
                     }
@@ -466,7 +473,7 @@ var Packlink = window.Packlink || {};
             name.innerHTML = shippingMethod.name;
 
             let selectButton = templateService.getComponent('pl-shipping-method-select-btn', template);
-            selectButton.setAttribute('data-pl-shipping-method-id', id);
+            selectButton.setAttribute('data-pl-shipping-method-id', id.toString());
             selectButton.addEventListener('click', handleShippingMethodSelectClicked, true);
 
             templateService.getComponent('pl-logo', template).setAttribute('src', shippingMethod.logoUrl);
@@ -476,7 +483,7 @@ var Packlink = window.Packlink || {};
             }
 
             let configButton = templateService.getComponent('pl-shipping-method-config-btn', template);
-            configButton.setAttribute('data-pl-shipping-method-id', id);
+            configButton.setAttribute('data-pl-shipping-method-id', id.toString());
             configButton.addEventListener('click', handleShippingMethodConfigClicked, true);
 
             if (shippingMethod.parcelOrigin === 'pickup') {
@@ -657,7 +664,7 @@ var Packlink = window.Packlink || {};
          */
         function handleShippingMethodConfigClicked(event) {
             let configTemplate = templateService.getTemplate('pl-shipping-method-configuration-template')[0];
-            let methodId = event.target.getAttribute('data-pl-shipping-method-id');
+            let methodId = parseInt(event.target.getAttribute('data-pl-shipping-method-id'));
             shippingMethodTemplates[methodId].after(configTemplate);
             configTemplate.setAttribute('id', 'pl-shipping-method-config-form');
 
@@ -1048,7 +1055,7 @@ var Packlink = window.Packlink || {};
                 byWeight ? 'pl-fixed-price-by-weight-criteria-template' : 'pl-fixed-price-by-value-criteria-template'
             )[0];
 
-            template.setAttribute('data-pl-row', id);
+            template.setAttribute('data-pl-row', id.toString());
 
             if (policies.length === 1) {
                 template.classList.add('first');
@@ -1065,7 +1072,7 @@ var Packlink = window.Packlink || {};
                 byWeight ? handleFixedPriceByWeightCriteriaRemoved : handleFixedPriceByValueCriteriaRemoved,
                 true
             );
-            removeBtn.setAttribute('data-pl-criteria-id', id);
+            removeBtn.setAttribute('data-pl-criteria-id', id.toString());
 
             point.appendChild(template);
         }
@@ -1088,7 +1095,7 @@ var Packlink = window.Packlink || {};
             for (let field of fields) {
                 let input = templateService.getComponent('data-pl-fixed-price', template, field);
                 input.value = policy[field];
-                input.setAttribute(`data-pl-${field}-id`, id);
+                input.setAttribute(`data-pl-${field}-id`, id.toString());
 
                 if (field === 'to') {
                     input.addEventListener(
@@ -1500,7 +1507,7 @@ var Packlink = window.Packlink || {};
          * @param response
          */
         function getTaxClassesSuccessHandler(response) {
-            taxSelector = templateService.getComponent('pl-tax-selector', document);
+            taxSelector = templateService.getComponent('pl-tax-selector', document.body);
 
             while (taxSelector.firstChild) {
                 taxSelector.firstChild.remove();
@@ -1661,6 +1668,7 @@ var Packlink = window.Packlink || {};
          */
         function showDashboardModal() {
             templateService.getComponent('pl-dashboard-modal-wrapper', extensionPoint).classList.remove('hidden');
+            utilityService.hideSpinner();
             hideGettingShippingMethodsMessage();
             isDashboardShown = true;
         }
