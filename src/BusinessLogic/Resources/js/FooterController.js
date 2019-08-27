@@ -32,6 +32,8 @@ var Packlink = window.Packlink || {};
                 closeSystemInfo
             );
 
+            document.addEventListener('keydown', closeSystemInfoOnEscape);
+
             debugModeCheckbox = templateService.getComponent('pl-debug-mode-checkbox', footer);
             debugModeCheckbox.addEventListener('click', debugModeCheckboxClickedHandler);
 
@@ -62,12 +64,23 @@ var Packlink = window.Packlink || {};
         }
 
         /**
-         * Opens system info panel.
+         * Closes system info panel.
          */
         function closeSystemInfo() {
             if (isSystemInfoOpen) {
                 systemInfoPanel.classList.add('hidden');
                 isSystemInfoOpen = false;
+            }
+        }
+
+        /**
+         * Closes system info panel.
+         *
+         * @var {Event} event
+         */
+        function closeSystemInfoOnEscape(event) {
+            if (event.key === 'Escape') {
+                closeSystemInfo();
             }
         }
 
