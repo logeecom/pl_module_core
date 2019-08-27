@@ -217,11 +217,12 @@ abstract class HttpClient
     /**
      * Save additional options for request.
      *
-     * @param string $domain A domain for which to reset configuration options.
-     * @param OptionsDTO[] $options Additional option to add to HTTP request.
+     * @param string $domain A domain for which to set configuration options.
+     * @param OptionsDTO[] $options Additional options to add to HTTP request.
      */
     protected function setAdditionalOptions($domain, $options)
     {
+        $this->httpConfigurationOptions = null;
         $this->getConfigService()->setHttpConfigurationOptions($domain, $options);
     }
 
@@ -232,6 +233,7 @@ abstract class HttpClient
      */
     protected function resetAdditionalOptions($domain)
     {
+        $this->httpConfigurationOptions = null;
         $this->getConfigService()->setHttpConfigurationOptions($domain, array());
     }
 

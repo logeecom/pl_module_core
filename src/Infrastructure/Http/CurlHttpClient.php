@@ -14,9 +14,13 @@ use Logeecom\Infrastructure\Logger\Logger;
 class CurlHttpClient extends HttpClient
 {
     /**
-     * Default asynchronous request timeout value.
+     * Default asynchronous request timeout value in milliseconds.
      */
     const DEFAULT_ASYNC_REQUEST_TIMEOUT = 1000;
+    /**
+     * Default synchronous request timeout value in milliseconds.
+     */
+    const DEFAULT_REQUEST_TIMEOUT = 60000;
     /**
      * Maximum number of 30x response redirects.
      */
@@ -220,13 +224,12 @@ class CurlHttpClient extends HttpClient
     protected function setCurlSessionOptionsBasedOnMethod($method)
     {
         if ($method === self::HTTP_METHOD_POST) {
-            $this->curlOptions[CURLOPT_POST] = true;
             // follow 30x redirects with POST
             // this constant is not defined prior to php 7.0.7
             $this->curlOptions[CURLOPT_POSTREDIR] = defined('CURL_REDIR_POST_ALL') ? CURL_REDIR_POST_ALL : 7;
-        } else {
-            $this->curlOptions[CURLOPT_CUSTOMREQUEST] = $method;
         }
+
+        $this->curlOptions[CURLOPT_CUSTOMREQUEST] = $method;
     }
 
     /**
@@ -241,7 +244,7 @@ class CurlHttpClient extends HttpClient
     {
         $this->curlOptions[CURLOPT_URL] = $this->adjustUrlIfNeeded($url);
         $this->curlOptions[CURLOPT_HTTPHEADER] = $headers;
-        if ($method === 'POST') {
+        if ($method === self::HTTP_METHOD_POST) {
             $this->curlOptions[CURLOPT_POSTFIELDS] = $body;
         }
     }
@@ -251,6 +254,7 @@ class CurlHttpClient extends HttpClient
      */
     protected function setCommonOptionsForCurlSession()
     {
+        $this->curlOptions[CURLOPT_HEADER] = true;
         $this->curlOptions[CURLOPT_RETURNTRANSFER] = true;
         if ($this->followLocation) {
             $this->curlOptions[CURLOPT_FOLLOWLOCATION] = true;
@@ -272,7 +276,7 @@ class CurlHttpClient extends HttpClient
      */
     protected function setCurlSessionOptionsForSynchronousRequest()
     {
-        $this->curlOptions[CURLOPT_HEADER] = true;
+        $this->curlOptions[CURLOPT_TIMEOUT_MS] = self::DEFAULT_REQUEST_TIMEOUT;
     }
 
     /**
