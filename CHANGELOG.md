@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ## Unreleased
 ### Added
 - Added additional ISO codes to the postal code transformer.
+- Added missing carrier logos for Italy and Spain.
 
 ## [2.3.0](https://github.com/packlink-dev/ecommerce_module_core/compare/v2.2.2...v2.3.0) - 2020-12-17
 ### Added
