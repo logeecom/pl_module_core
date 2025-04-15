@@ -4,6 +4,7 @@ namespace Packlink\BusinessLogic;
 
 use Logeecom\Infrastructure\AutoTest\AutoTestService;
 use Logeecom\Infrastructure\Http\HttpClient;
+use Logeecom\Infrastructure\ORM\RepositoryRegistry;
 use Logeecom\Infrastructure\ServiceRegister;
 use Logeecom\Infrastructure\TaskExecution\TaskEvents\TickEvent;
 use Logeecom\Infrastructure\Utility\Events\EventBus;
@@ -23,6 +24,9 @@ use Packlink\BusinessLogic\Http\Proxy;
 use Packlink\BusinessLogic\CountryLabels\Interfaces\CountryService as LabelServiceInterface;
 use Packlink\BusinessLogic\CountryLabels\CountryService as CountryLabelService;
 use Packlink\BusinessLogic\Location\LocationService;
+use Packlink\BusinessLogic\OAuth\Interfaces\OAuthStateServiceInterface;
+use Packlink\BusinessLogic\OAuth\Models\OAuthState;
+use Packlink\BusinessLogic\OAuth\OAuthStateService;
 use Packlink\BusinessLogic\Order\OrderService;
 use Packlink\BusinessLogic\OrderShipmentDetails\OrderShipmentDetailsService;
 use Packlink\BusinessLogic\Registration\RegistrationLegalPolicy;
@@ -205,6 +209,14 @@ class BootstrapComponent extends \Logeecom\Infrastructure\BootstrapComponent
             CustomsService::CLASS_NAME,
             function () {
                 return new CustomsService();
+            }
+        );
+
+        ServiceRegister::registerService(
+            OAuthStateServiceInterface::CLASS_NAME,
+            function () {
+                $repository = RepositoryRegistry::getRepository(OAuthState::CLASS_NAME);
+                return new OAuthStateService($repository);
             }
         );
     }
