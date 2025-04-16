@@ -15,7 +15,7 @@ use Packlink\BusinessLogic\OAuth\OAuthStateService;
 class OAuthStateServiceTest extends BaseTestWithServices
 {
     /**
-     * Order service instance.
+     * OAuthState service instance.
      *
      * @var OAuthStateService
      */
