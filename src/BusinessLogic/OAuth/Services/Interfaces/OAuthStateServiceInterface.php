@@ -7,6 +7,13 @@ interface OAuthStateServiceInterface
     const CLASS_NAME = __CLASS__;
 
     /**
+     * @param $tenantId
+     *
+     * @return mixed
+     */
+    public function generateAndSaveState($tenantId);
+
+    /**
      * @param string $tenantId
      *
      * @return string

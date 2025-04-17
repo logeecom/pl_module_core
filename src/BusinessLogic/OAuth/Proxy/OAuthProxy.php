@@ -17,11 +17,6 @@ use Packlink\BusinessLogic\OAuth\Services\TenantDomainProvider;
 class OAuthProxy implements OAuthProxyInterface
 {
     /**
-     * Fully qualified name of this class.
-     */
-    const CLASS_NAME = __CLASS__;
-
-    /**
      * HTTP Client.
      *
      * @var HttpClient

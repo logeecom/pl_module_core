@@ -6,6 +6,8 @@ use Packlink\BusinessLogic\Http\DTO\OAuthToken;
 
 interface OAuthProxyInterface
 {
+    const CLASS_NAME = __CLASS__;
+
     /**
      * Exchanges the authorization code for access and refresh tokens.
      *
