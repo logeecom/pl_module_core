@@ -1,6 +1,6 @@
 <?php
 
-namespace Packlink\BusinessLogic\OAuth\Interfaces;
+namespace Packlink\BusinessLogic\OAuth\Services\Interfaces;
 
 use Packlink\BusinessLogic\Http\DTO\OAuthUrlData;
 
@@ -13,7 +13,7 @@ interface OAuthServiceInterface
 
     public function getApiKey();
 
-    public function getToken();
+    public function getToken($accessToken);
 
     public function refreshToken($refreshToken);
 

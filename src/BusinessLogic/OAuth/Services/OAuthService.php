@@ -1,14 +1,22 @@
 <?php
 
-namespace Packlink\BusinessLogic\OAuth;
+namespace Packlink\BusinessLogic\OAuth\Services;
 
+use Logeecom\Infrastructure\Http\Exceptions\HttpAuthenticationException;
+use Logeecom\Infrastructure\Http\Exceptions\HttpCommunicationException;
+use Logeecom\Infrastructure\Http\Exceptions\HttpRequestException;
 use Packlink\BusinessLogic\Http\DTO\OAuthUrlData;
-use Packlink\BusinessLogic\OAuth\Interfaces\OAuthServiceInterface;
+use Packlink\BusinessLogic\OAuth\Proxy\OAuthProxy;
+use Packlink\BusinessLogic\OAuth\Services\Interfaces\OAuthServiceInterface;
 
 class OAuthService implements OAuthServiceInterface
 {
-    public function __construct()
+    /** @var OAuthProxy */
+    protected $proxy;
+
+    public function __construct(OAuthProxy $proxy)
     {
+        $this->proxy = $proxy;
     }
 
     public function connect($accessToken)
@@ -21,14 +29,19 @@ class OAuthService implements OAuthServiceInterface
         // TODO: Implement getApiKey() method.
     }
 
-    public function getToken()
+    public function getToken($accessToken)
     {
-        // TODO: Implement getToken() method.
+        return $this->proxy->getAuthToken($accessToken);
     }
 
+    /**
+     * @throws HttpCommunicationException
+     * @throws HttpAuthenticationException
+     * @throws HttpRequestException
+     */
     public function refreshToken($refreshToken)
     {
-        // TODO: Implement refreshToken() method.
+        return $this->proxy->refreshAuthToken($refreshToken);
     }
 
     public function buildRedirectUrl(OAuthUrlData $data)

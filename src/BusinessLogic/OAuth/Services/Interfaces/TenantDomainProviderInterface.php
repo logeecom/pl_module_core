@@ -1,6 +1,6 @@
 <?php
 
-namespace Packlink\BusinessLogic\OAuth\Interfaces;
+namespace Packlink\BusinessLogic\OAuth\Services\Interfaces;
 
 interface TenantDomainProviderInterface
 {

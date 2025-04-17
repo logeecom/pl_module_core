@@ -10,7 +10,7 @@ use Logeecom\Tests\BusinessLogic\Common\BaseTestWithServices;
 use Logeecom\Tests\Infrastructure\Common\TestComponents\ORM\MemoryRepository;
 use Packlink\BusinessLogic\OAuth\Exceptions\InvalidOAuthStateException;
 use Packlink\BusinessLogic\OAuth\Models\OAuthState;
-use Packlink\BusinessLogic\OAuth\OAuthStateService;
+use Packlink\BusinessLogic\OAuth\Services\OAuthStateService;
 
 class OAuthStateServiceTest extends BaseTestWithServices
 {

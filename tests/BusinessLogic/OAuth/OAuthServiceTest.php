@@ -3,9 +3,11 @@
 namespace BusinessLogic\OAuth;
 
 use Logeecom\Tests\BusinessLogic\Common\BaseTestWithServices;
+use Logeecom\Tests\Infrastructure\Common\TestComponents\TestHttpClient;
 use Packlink\BusinessLogic\Http\DTO\OAuthUrlData;
-use Packlink\BusinessLogic\OAuth\OAuthService;
-use Packlink\BusinessLogic\OAuth\TenantDomainProvider;
+use Packlink\BusinessLogic\OAuth\Proxy\OAuthProxy;
+use Packlink\BusinessLogic\OAuth\Services\OAuthService;
+use Packlink\BusinessLogic\OAuth\Services\TenantDomainProvider;
 
 class OAuthServiceTest extends BaseTestWithServices
 {
@@ -18,12 +20,33 @@ class OAuthServiceTest extends BaseTestWithServices
 
     protected function setUp()
     {
-        $this->service = new OAuthService();
+        $this->before();
+    }
+
+    protected function before()
+    {
+        parent::before();
+
+        $this->httpClient = new TestHttpClient();
+
+        $mockResponse = new \Logeecom\Infrastructure\Http\HttpResponse(200, array(), json_encode(array(
+            'access_token' => 'mockAccessToken',
+            'token_type' => 'bearer',
+            'expires_in' => 3600,
+            'refresh_token' => 'mockRefreshToken',
+        )
+        ));
+        $this->httpClient->setMockResponses(array($mockResponse));
+
+        $oAuthUrlData = new OAuthUrlData('tenant1', 'client', 'www.example.com', array('write','read'),'ES','tenant1state', 'client_secret');
+        $proxy = new OAuthProxy($oAuthUrlData, $this->httpClient);
+
+        $this->service = new OAuthService($proxy);
     }
 
     public function testBuildRedirectUrl()
     {
-        $data = new OAuthUrlData('tenant1', 'client', 'www.example.com', array('write','read'),'ES','tenant1state');
+        $data = new OAuthUrlData('tenant1', 'client', 'www.example.com', array('write','read'),'ES','tenant1state', 'client_secret');
 
         $expectedParams = http_build_query(array(
             'response_type' => 'code',

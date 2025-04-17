@@ -18,12 +18,33 @@ class OAuthUrlData extends DataTransferObject
     /**
      * @var string
      */
+    private $clientSecret;
+
+    /**
+     * @var string
+     */
     private $redirectUri;
 
     /**
      * @var array
      */
     private $scopes;
+
+    /**
+     * @return string
+     */
+    public function getClientSecret()
+    {
+        return $this->clientSecret;
+    }
+
+    /**
+     * @param string $clientSecret
+     */
+    public function setClientSecret($clientSecret)
+    {
+        $this->clientSecret = $clientSecret;
+    }
 
     /**
      * @var string
@@ -44,10 +65,11 @@ class OAuthUrlData extends DataTransferObject
      * @param array $scopes
      * @param string $domain
      */
-    public function __construct($tenantId, $clientId, $redirectUri, $scopes, $domain, $state)
+    public function __construct($tenantId, $clientId, $redirectUri, $scopes, $domain, $state, $clientSecret)
     {
         $this->tenantId = $tenantId;
         $this->clientId = $clientId;
+        $this->clientSecret = $clientSecret;
         $this->redirectUri = $redirectUri;
         $this->scopes = $scopes;
         $this->domain = $domain;
