@@ -25,6 +25,21 @@ class OAuthStateService implements OAuthStateServiceInterface
     }
 
     /**
+     * Generates a new OAuth state and saves it for the given tenant.
+     *
+     * @param string $tenantId
+     *
+     * @return string Base64-encoded state string
+     */
+    public function generateAndSaveState($tenantId)
+    {
+        $state = $this->generate($tenantId);
+        $this->saveState($tenantId, $state);
+
+        return $state;
+    }
+
+    /**
      * @param $tenantId
      *
      * @return string

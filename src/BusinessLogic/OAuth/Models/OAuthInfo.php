@@ -16,8 +16,8 @@ class OAuthInfo extends Entity
     protected $fields = array(
         'id',
         'tenantId',
-        'encryptedAccessToken',
-        'encryptedRefreshToken',
+        'accessToken',
+        'refreshToken',
         'expiresIn',
         'createdAt'
     );
@@ -29,16 +29,48 @@ class OAuthInfo extends Entity
     protected $tenantId;
 
     /** @var string */
-    protected $encryptedAccessToken;
+    protected $accessToken;
 
     /** @var string */
-    protected $encryptedRefreshToken;
+    protected $refreshToken;
 
     /** @var int */
     protected $expiresIn;
 
     /** @var int */
     protected $createdAt;
+
+    /**
+     * @return string
+     */
+    public function getAccessToken()
+    {
+        return $this->accessToken;
+    }
+
+    /**
+     * @param string $accessToken
+     */
+    public function setAccessToken($accessToken)
+    {
+        $this->accessToken = $accessToken;
+    }
+
+    /**
+     * @return string
+     */
+    public function getRefreshToken()
+    {
+        return $this->refreshToken;
+    }
+
+    /**
+     * @param string $refreshToken
+     */
+    public function setRefreshToken($refreshToken)
+    {
+        $this->refreshToken = $refreshToken;
+    }
 
     public function getId()
     {
@@ -58,26 +90,6 @@ class OAuthInfo extends Entity
     public function setTenantId($tenantId)
     {
         $this->tenantId = $tenantId;
-    }
-
-    public function getEncryptedAccessToken()
-    {
-        return $this->encryptedAccessToken;
-    }
-
-    public function setEncryptedAccessToken($token)
-    {
-        $this->encryptedAccessToken = $token;
-    }
-
-    public function getEncryptedRefreshToken()
-    {
-        return $this->encryptedRefreshToken;
-    }
-
-    public function setEncryptedRefreshToken($token)
-    {
-        $this->encryptedRefreshToken = $token;
     }
 
     public function getExpiresIn()

@@ -2,20 +2,44 @@
 
 namespace Packlink\BusinessLogic\OAuth\Services\Interfaces;
 
+use Packlink\BusinessLogic\Http\DTO\OAuthToken;
 use Packlink\BusinessLogic\Http\DTO\OAuthUrlData;
+use Packlink\BusinessLogic\Http\OAuthConnectData;
 
 interface OAuthServiceInterface
 {
+    const CLASS_NAME = __CLASS__;
+
     /**
-     * @param string $accessToken
+     * @param OAuthConnectData $data
      */
-    public function connect($accessToken);
+    public function connect(OAuthConnectData $data);
 
-    public function getApiKey();
+    /**
+     * @param $accessToken
+     *
+     * @return string
+     */
+    public function getApiKey($accessToken);
 
-    public function getToken($accessToken);
+    /**
+     * @param $authorizationCode
+     *
+     * @return OAuthToken
+     */
+    public function getToken($authorizationCode);
 
+    /**
+     * @param $refreshToken
+     *
+     * @return OAuthToken
+     */
     public function refreshToken($refreshToken);
 
+    /**
+     * @param OAuthUrlData $data
+     *
+     * @return string
+     */
     public function buildRedirectUrl(OAuthUrlData $data);
 }
