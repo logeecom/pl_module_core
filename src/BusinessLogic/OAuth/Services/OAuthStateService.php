@@ -1,13 +1,13 @@
 <?php
 
-namespace Packlink\BusinessLogic\OAuth;
+namespace Packlink\BusinessLogic\OAuth\Services;
 
 use Logeecom\Infrastructure\ORM\Exceptions\QueryFilterInvalidParamException;
 use Logeecom\Infrastructure\ORM\Interfaces\RepositoryInterface;
 use Logeecom\Infrastructure\ORM\QueryFilter\QueryFilter;
 use Packlink\BusinessLogic\OAuth\Exceptions\InvalidOAuthStateException;
-use Packlink\BusinessLogic\OAuth\Interfaces\OAuthStateServiceInterface;
 use Packlink\BusinessLogic\OAuth\Models\OAuthState;
+use Packlink\BusinessLogic\OAuth\Services\Interfaces\OAuthStateServiceInterface;
 
 class OAuthStateService implements OAuthStateServiceInterface
 {

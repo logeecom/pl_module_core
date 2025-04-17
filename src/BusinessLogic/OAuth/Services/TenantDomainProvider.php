@@ -1,8 +1,10 @@
 <?php
 
-namespace Packlink\BusinessLogic\OAuth;
+namespace Packlink\BusinessLogic\OAuth\Services;
 
-class TenantDomainProvider implements Interfaces\TenantDomainProviderInterface
+use Packlink\BusinessLogic\OAuth\Services;
+
+class TenantDomainProvider implements Services\Interfaces\TenantDomainProviderInterface
 {
     /**
      * @var array
