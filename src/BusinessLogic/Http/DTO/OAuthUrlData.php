@@ -52,11 +52,6 @@ class OAuthUrlData extends DataTransferObject
     private $domain;
 
     /**
-     * @var string
-     */
-    private $state;
-
-    /**
      * OAuthUrlData constructor.
      *
      * @param string $tenantId
@@ -65,7 +60,7 @@ class OAuthUrlData extends DataTransferObject
      * @param array $scopes
      * @param string $domain
      */
-    public function __construct($tenantId, $clientId, $redirectUri, $scopes, $domain, $state, $clientSecret)
+    public function __construct($tenantId, $clientId, $redirectUri, $scopes, $domain, $clientSecret)
     {
         $this->tenantId = $tenantId;
         $this->clientId = $clientId;
@@ -73,7 +68,6 @@ class OAuthUrlData extends DataTransferObject
         $this->redirectUri = $redirectUri;
         $this->scopes = $scopes;
         $this->domain = $domain;
-        $this->state = $state;
     }
 
     /**
@@ -154,22 +148,6 @@ class OAuthUrlData extends DataTransferObject
     public function setDomain($domain)
     {
         $this->domain = $domain;
-    }
-
-    /**
-     * @return string
-     */
-    public function getState()
-    {
-        return $this->state;
-    }
-
-    /**
-     * @param string $state
-     */
-    public function setState($state)
-    {
-        $this->state = $state;
     }
 
     /**
