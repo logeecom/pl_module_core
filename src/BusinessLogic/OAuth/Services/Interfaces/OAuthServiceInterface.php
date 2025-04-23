@@ -2,9 +2,9 @@
 
 namespace Packlink\BusinessLogic\OAuth\Services\Interfaces;
 
+use Packlink\BusinessLogic\Http\DTO\OAuthConnectData;
 use Packlink\BusinessLogic\Http\DTO\OAuthToken;
 use Packlink\BusinessLogic\Http\DTO\OAuthUrlData;
-use Packlink\BusinessLogic\Http\OAuthConnectData;
 
 interface OAuthServiceInterface
 {

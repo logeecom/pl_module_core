@@ -632,7 +632,14 @@ class Proxy
             $bodyStringToSend = json_encode($body);
         }
 
-        $headers['Authorization'] = 'Bearer ' . $accessToken;
+        $headers = array(
+            'accept' => 'Accept: application/json',
+            'content' => 'Content-Type: application/json',
+            'token' => 'Authorization: ' . 'Bearer ' . $accessToken,
+            'Module-Version' => 'X-Module-Version: ' . $this->configService->getModuleVersion(),
+            'Ecommerce-Name' => 'X-Ecommerce-Name: ' . $this->configService->getECommerceName(),
+            'Ecommerce-Version' => 'X-Ecommerce-Version: ' . $this->configService->getECommerceVersion(),
+        );
 
         $response = $this->client->request(
             $method,

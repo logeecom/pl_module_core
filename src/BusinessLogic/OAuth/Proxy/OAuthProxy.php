@@ -47,7 +47,7 @@ class OAuthProxy implements OAuthProxyInterface
         $this->config = $config;
         $this->client = $client;
 
-        $this->baseUrl = 'https://' . TenantDomainProvider::getDomain($config->getDomain()) . '/oauth2/token/';
+        $this->baseUrl = 'https://' . TenantDomainProvider::getDomain($config->getDomain()) . '/auth/oauth2/';
     }
 
     /**
@@ -61,8 +61,8 @@ class OAuthProxy implements OAuthProxyInterface
     public function getAuthToken($authorizationCode)
     {
         return $this->requestToken(array(
-            'code' => $authorizationCode,
             'grant_type' => 'authorization_code',
+            'code' => $authorizationCode,
             'redirect_uri' => $this->config->getRedirectUri(),
         ));
     }
@@ -126,7 +126,7 @@ class OAuthProxy implements OAuthProxyInterface
     {
         $bodyStringToSend = '';
         if (in_array(strtoupper($method), array(HttpClient::HTTP_METHOD_POST, HttpClient::HTTP_METHOD_PUT), true)) {
-            $bodyStringToSend = json_encode($body);
+            $bodyStringToSend = http_build_query($body);
         }
 
         $response = $this->client->request(
@@ -184,7 +184,7 @@ class OAuthProxy implements OAuthProxyInterface
         $clientId = $this->config->getClientId();
         $clientSecret = $this->config->getClientSecret();
 
-        $encodedCredentials = base64_encode($clientId . ':' . $clientSecret);
+        $encodedCredentials = base64_encode($clientId . ':' . urlencode($clientSecret));
 
         return array(
             'Authorization' => 'Authorization: Basic ' . $encodedCredentials,

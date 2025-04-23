@@ -99,7 +99,7 @@ class OAuthStateService implements OAuthStateServiceInterface
             throw new InvalidOAuthStateException('Invalid state structure.');
         }
 
-        $state = $this->getState($data['tenantId'], $data['state']);
+        $state = $this->getState($data['tenantId']);
 
         if ($state === null) {
             throw new InvalidOAuthStateException('State not found.');

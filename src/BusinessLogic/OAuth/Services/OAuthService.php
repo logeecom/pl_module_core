@@ -6,9 +6,8 @@ use Logeecom\Infrastructure\Http\Exceptions\HttpAuthenticationException;
 use Logeecom\Infrastructure\Http\Exceptions\HttpCommunicationException;
 use Logeecom\Infrastructure\Http\Exceptions\HttpRequestException;
 use Logeecom\Infrastructure\ORM\Interfaces\RepositoryInterface;
-use Packlink\BusinessLogic\Http\DTO\OAuthToken;
+use Packlink\BusinessLogic\Http\DTO\OAuthConnectData;
 use Packlink\BusinessLogic\Http\DTO\OAuthUrlData;
-use Packlink\BusinessLogic\Http\OAuthConnectData;
 use Packlink\BusinessLogic\Http\Proxy;
 use Packlink\BusinessLogic\OAuth\Models\OAuthInfo;
 use Packlink\BusinessLogic\OAuth\Proxy\Interfaces\OAuthProxyInterface;
@@ -49,12 +48,14 @@ class OAuthService implements OAuthServiceInterface
      * @param OAuthConnectData $data
      *
      * @return string
+     *
      * @throws HttpAuthenticationException
      * @throws HttpCommunicationException
      * @throws HttpRequestException
      */
     public function connect(OAuthConnectData $data)
     {
+        $this->stateService->validateState($data->getState());
         $token = $this->getToken($data->getAuthorizationCode());
 
         $entity = new OAuthInfo();

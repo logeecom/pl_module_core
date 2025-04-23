@@ -1,6 +1,6 @@
 <?php
 
-namespace Packlink\BusinessLogic\Http;
+namespace Packlink\BusinessLogic\Http\DTO;
 
 class OAuthConnectData
 {
@@ -10,10 +10,19 @@ class OAuthConnectData
     /** @var string */
     private $tenantId;
 
-    public function __construct($authorizationCode, $tenantId)
+    /*** @var string */
+    private $state;
+
+    public function __construct($authorizationCode, $tenantId, $state)
     {
         $this->authorizationCode = $authorizationCode;
         $this->tenantId = $tenantId;
+        $this->state = $state;
+    }
+
+    public function getState()
+    {
+        return $this->state;
     }
 
     /**
