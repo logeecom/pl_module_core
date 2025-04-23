@@ -110,17 +110,15 @@ class OAuthStateService implements OAuthStateServiceInterface
 
     /**
      * @param $tenantId
-     * @param $state
      *
      * @return \Logeecom\Infrastructure\ORM\Entity|null
      *
      * @throws QueryFilterInvalidParamException
      */
-    public function getState($tenantId, $state)
+    public function getState($tenantId)
     {
         $filter = new QueryFilter();
         $filter->where('tenantId', '=', $tenantId);
-        $filter->where('state', '=', $state);
 
         return $this->repository->selectOne($filter);
     }

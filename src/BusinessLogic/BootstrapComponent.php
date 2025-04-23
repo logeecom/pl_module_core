@@ -223,23 +223,6 @@ class BootstrapComponent extends \Logeecom\Infrastructure\BootstrapComponent
                 return new OAuthStateService($repository);
             }
         );
-
-
-        ServiceRegister::registerService(
-            OAuthServiceInterface::CLASS_NAME,
-            function () {
-                /**@var OAuthProxy $oAuthProxy*/
-                $oAuthProxy = ServiceRegister::getService(OAuthProxyInterface::CLASS_NAME);
-                /**@var Proxy $packlinkProxy*/
-                $packlinkProxy = ServiceRegister::getService(Proxy::CLASS_NAME);
-
-                return new OAuthService(
-                    $oAuthProxy,
-                    $packlinkProxy,
-                    RepositoryRegistry::getRepository(OAuthState::CLASS_NAME)
-                );
-            }
-        );
     }
 
     /**

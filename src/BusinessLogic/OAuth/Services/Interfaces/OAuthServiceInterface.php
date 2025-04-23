@@ -41,5 +41,5 @@ interface OAuthServiceInterface
      *
      * @return string
      */
-    public function buildRedirectUrl(OAuthUrlData $data);
+    public function buildRedirectUrlAndSaveState(OAuthUrlData $data);
 }

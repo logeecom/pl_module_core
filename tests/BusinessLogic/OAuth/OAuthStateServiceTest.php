@@ -1,6 +1,6 @@
 <?php
 
-namespace BusinessLogic\OAuth;
+namespace Logeecom\Tests\BusinessLogic\OAuth;
 
 use Logeecom\Infrastructure\ORM\Exceptions\QueryFilterInvalidParamException;
 use Logeecom\Infrastructure\ORM\Exceptions\RepositoryClassException;
