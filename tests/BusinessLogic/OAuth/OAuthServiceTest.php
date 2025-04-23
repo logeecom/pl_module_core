@@ -1,6 +1,6 @@
 <?php
 
-namespace BusinessLogic\OAuth;
+namespace Logeecom\Tests\BusinessLogic\OAuth;
 
 use Logeecom\Infrastructure\Http\Exceptions\HttpAuthenticationException;
 use Logeecom\Infrastructure\Http\Exceptions\HttpCommunicationException;
@@ -10,6 +10,7 @@ use Logeecom\Infrastructure\ORM\Exceptions\EntityClassException;
 use Logeecom\Infrastructure\ORM\Exceptions\QueryFilterInvalidParamException;
 use Logeecom\Infrastructure\ORM\RepositoryRegistry;
 use Logeecom\Tests\BusinessLogic\Common\BaseTestWithServices;
+use Logeecom\Tests\BusinessLogic\Common\TestComponents\OAuth\OAuthConfigurationService;
 use Logeecom\Tests\Infrastructure\Common\TestComponents\ORM\MemoryRepository;
 use Logeecom\Tests\Infrastructure\Common\TestComponents\TestHttpClient;
 use Logeecom\Tests\Infrastructure\Common\TestServiceRegister;
@@ -19,6 +20,7 @@ use Packlink\BusinessLogic\OAuth\Models\OAuthInfo;
 use Packlink\BusinessLogic\OAuth\Models\OAuthState;
 use Packlink\BusinessLogic\OAuth\Proxy\OAuthProxy;
 use Packlink\BusinessLogic\OAuth\Services\OAuthService;
+use Packlink\BusinessLogic\OAuth\Services\OAuthStateService;
 use Packlink\BusinessLogic\OAuth\Services\TenantDomainProvider;
 
 class OAuthServiceTest extends BaseTestWithServices
@@ -33,12 +35,22 @@ class OAuthServiceTest extends BaseTestWithServices
     /**
      * @var MemoryRepository
      */
+    public $stateRepository;
+
+    /**
+     * @var MemoryRepository
+     */
     public $repository;
 
     /**
      * @var HttpClient
      */
     public $httpClientOauth;
+
+    /**
+     * @var OAuthStateService
+     */
+    public $stateService;
 
     protected function setUp()
     {
@@ -60,16 +72,17 @@ class OAuthServiceTest extends BaseTestWithServices
         ));
         $this->httpClientOauth->setMockResponses(array($mockResponse));
 
-        $oAuthUrlData = new OAuthUrlData(
-            'tenant1',
-            'client',
-            'www.example.com',
-            array('write', 'read'),
-            'ES',
-            'tenant1state',
-            'client_secret'
-        );
-        $authProxy = new OAuthProxy($oAuthUrlData, $this->httpClientOauth);
+        $oAuth = new OAuthConfigurationService();
+
+        $oAuth->setDomain('tenant1');
+        $oAuth->setClientId('client');
+        $oAuth->setClientSecret('client_secret');
+        $oAuth->setRedirectUri('www.example.com');
+        $oAuth->setTenantId('tenant1');
+        $oAuth->setScopes(array('write','read'));
+
+
+        $authProxy = new OAuthProxy($oAuth, $this->httpClientOauth);
 
         RepositoryRegistry::registerRepository(OAuthInfo::CLASS_NAME, MemoryRepository::getClassName());
 
@@ -78,9 +91,18 @@ class OAuthServiceTest extends BaseTestWithServices
         /**@var Proxy $proxy */
         $proxy = TestServiceRegister::getService(Proxy::CLASS_NAME);
 
-        $this->service = new OAuthService($authProxy, $proxy, $this->repository);
+        RepositoryRegistry::registerRepository(OAuthState::CLASS_NAME, MemoryRepository::getClassName());
+
+        $this->stateRepository = RepositoryRegistry::getRepository(OAuthState::CLASS_NAME);
+
+        $this->stateService = new OAuthStateService($this->stateRepository);
+
+        $this->service = new OAuthService($authProxy, $proxy, $this->repository, $this->stateService);
     }
 
+    /**
+     * @throws QueryFilterInvalidParamException
+     */
     public function testBuildRedirectUrl()
     {
         $data = new OAuthUrlData(
@@ -93,17 +115,19 @@ class OAuthServiceTest extends BaseTestWithServices
             'client_secret'
         );
 
+        $actualUrl = $this->service->buildRedirectUrlAndSaveState($data);
+
+        $state = $this->stateService->getState('tenant1')->getState();
+
         $expectedParams = http_build_query(array(
             'response_type' => 'code',
             'client_id' => 'client',
             'redirect_uri' => 'www.example.com',
             'scope' => 'write read',
-            'state' => 'tenant1state',
+            'state' =>  $state,
         ), '', '&', PHP_QUERY_RFC3986);
 
-        $expectedUrl = 'https://' . TenantDomainProvider::getDomain('ES') . 'auth/oauth2/authorize?' . $expectedParams;
-
-        $actualUrl = $this->service->buildRedirectUrl($data);
+        $expectedUrl = 'https://' . TenantDomainProvider::getDomain('ES') . '/auth/oauth2/authorize?' . $expectedParams;
 
         $this->assertEquals($expectedUrl, $actualUrl);
     }

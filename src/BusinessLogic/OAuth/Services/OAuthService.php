@@ -6,6 +6,7 @@ use Logeecom\Infrastructure\Http\Exceptions\HttpAuthenticationException;
 use Logeecom\Infrastructure\Http\Exceptions\HttpCommunicationException;
 use Logeecom\Infrastructure\Http\Exceptions\HttpRequestException;
 use Logeecom\Infrastructure\ORM\Interfaces\RepositoryInterface;
+use Packlink\BusinessLogic\Http\DTO\OAuthToken;
 use Packlink\BusinessLogic\Http\DTO\OAuthUrlData;
 use Packlink\BusinessLogic\Http\OAuthConnectData;
 use Packlink\BusinessLogic\Http\Proxy;
@@ -13,6 +14,7 @@ use Packlink\BusinessLogic\OAuth\Models\OAuthInfo;
 use Packlink\BusinessLogic\OAuth\Proxy\Interfaces\OAuthProxyInterface;
 use Packlink\BusinessLogic\OAuth\Proxy\OAuthProxy;
 use Packlink\BusinessLogic\OAuth\Services\Interfaces\OAuthServiceInterface;
+use Packlink\BusinessLogic\OAuth\Services\Interfaces\OAuthStateServiceInterface;
 
 class OAuthService implements OAuthServiceInterface
 {
@@ -28,12 +30,18 @@ class OAuthService implements OAuthServiceInterface
      * @var RepositoryInterface
      */
     protected $repository;
+    /**
+     * @var OAuthStateServiceInterface
+     */
+    protected $stateService;
 
-    public function __construct(OAuthProxyInterface $proxy, Proxy $packlinkProxy, RepositoryInterface $repository)
+
+    public function __construct(OAuthProxyInterface $proxy, Proxy $packlinkProxy, RepositoryInterface $repository, OAuthStateServiceInterface $stateService)
     {
         $this->proxy = $proxy;
         $this->packlinkProxy = $packlinkProxy;
         $this->repository = $repository;
+        $this->stateService = $stateService;
     }
 
     /**
@@ -117,21 +125,25 @@ class OAuthService implements OAuthServiceInterface
      *
      * @return string
      */
-    public function buildRedirectUrl(OAuthUrlData $data)
+    public function buildRedirectUrlAndSaveState(OAuthUrlData $data)
     {
         $queryParams = array(
             'response_type' => 'code',
             'client_id'     => $data->getClientId(),
             'redirect_uri'  => $data->getRedirectUri(),
             'scope'         => implode(' ', $data->getScopes()),
-            'state'         => $data->getState(),
+            'state'         => $this->saveState($data->getTenantId()),
         );
 
         $queryString = http_build_query($queryParams, '', '&', PHP_QUERY_RFC3986);
 
         $domain = TenantDomainProvider::getDomain($data->getDomain());
 
-        return 'https://' . rtrim($domain, '/') . 'auth/oauth2/authorize?' . $queryString;
+        return 'https://' . rtrim($domain, '/') . '/auth/oauth2/authorize?' . $queryString;
+    }
+
+    private function saveState($tenantId){
+        return $this->stateService->generateAndSaveState($tenantId);
     }
 
     private function isTokenExpired(OAuthInfo $tokenEntity)

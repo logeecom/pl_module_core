@@ -1,15 +1,15 @@
 <?php
 
-namespace BusinessLogic\OAuth;
+namespace Logeecom\Tests\BusinessLogic\OAuth;
 
 use Logeecom\Infrastructure\Http\Exceptions\HttpAuthenticationException;
 use Logeecom\Infrastructure\Http\Exceptions\HttpRequestException;
 use Logeecom\Infrastructure\Http\HttpClient;
 use Logeecom\Infrastructure\Http\HttpResponse;
 use Logeecom\Tests\BusinessLogic\Common\BaseTestWithServices;
+use Logeecom\Tests\BusinessLogic\Common\TestComponents\OAuth\OAuthConfigurationService;
 use Logeecom\Tests\Infrastructure\Common\TestComponents\TestHttpClient;
 use Logeecom\Tests\Infrastructure\Common\TestServiceRegister;
-use Packlink\BusinessLogic\Http\DTO\OAuthUrlData;
 use Packlink\BusinessLogic\OAuth\Proxy\OAuthProxy;
 
 class OAuthProxyTest extends BaseTestWithServices
@@ -20,6 +20,7 @@ class OAuthProxyTest extends BaseTestWithServices
     }
     /** @var OAuthProxy */
     private $proxy;
+
     protected function before()
     {
         parent::before();
@@ -33,9 +34,17 @@ class OAuthProxyTest extends BaseTestWithServices
             }
         );
 
-        $oAuthUrlData = new OAuthUrlData('tenant1', 'client', 'www.example.com', array('write','read'),'ES','tenant1state', 'client_secret');
+        $oAuth = new OAuthConfigurationService();
 
-        $this->proxy = new OAuthProxy($oAuthUrlData, $this->httpClient);
+        $oAuth->setDomain('tenant1');
+        $oAuth->setClientId('client');
+        $oAuth->setClientSecret('client_secret');
+        $oAuth->setRedirectUri('www.example.com');
+        $oAuth->setTenantId('tenant1');
+        $oAuth->setScopes(array('write','read'));
+
+
+        $this->proxy = new OAuthProxy($oAuth, $this->httpClient);
     }
 
     public function testGetAuthTokenReturnsValidToken()

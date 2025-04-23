@@ -11,7 +11,7 @@ use Logeecom\Infrastructure\Http\HttpResponse;
 use Logeecom\Infrastructure\Logger\Logger;
 use Packlink\BusinessLogic\Http\DTO\OAuthToken;
 use Packlink\BusinessLogic\OAuth\Proxy\Interfaces\OAuthProxyInterface;
-use Packlink\BusinessLogic\Http\DTO\OAuthUrlData;
+use Packlink\BusinessLogic\OAuth\Services\OAuthConfiguration;
 use Packlink\BusinessLogic\OAuth\Services\TenantDomainProvider;
 
 class OAuthProxy implements OAuthProxyInterface
@@ -24,7 +24,7 @@ class OAuthProxy implements OAuthProxyInterface
     private $client;
 
     /**
-     * @var OAuthUrlData
+     * @var \Packlink\BusinessLogic\OAuth\Services\OAuthConfiguration
      */
     private $config;
 
@@ -39,10 +39,10 @@ class OAuthProxy implements OAuthProxyInterface
     /**
      * OAuthProxy constructor.
      *
-     * @param OAuthUrlData $config
+     * @param \Packlink\BusinessLogic\OAuth\Services\OAuthConfiguration
      * @param HttpClient $client
      */
-    public function __construct(OAuthUrlData $config, HttpClient $client)
+    public function __construct(OAuthConfiguration $config, HttpClient $client)
     {
         $this->config = $config;
         $this->client = $client;
