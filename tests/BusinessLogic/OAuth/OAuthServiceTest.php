@@ -141,7 +141,7 @@ class OAuthServiceTest extends BaseTestWithServices
     public function testConnectStoresTokenAndReturnsApiKey()
     {
         $state = $this->stateService->generateAndSaveState('tenant1');
-        $connectData = new \Packlink\BusinessLogic\Http\DTO\OAuthConnectData('code123', 'tenant1', $state);
+        $connectData = new \Packlink\BusinessLogic\Http\DTO\OAuthConnectData('code123',$state);
 
         $mockResponse = new \Logeecom\Infrastructure\Http\HttpResponse(200, array(), json_encode(array(
                 'token' => 'apiKey',
@@ -161,7 +161,7 @@ class OAuthServiceTest extends BaseTestWithServices
     public function testConnectRefreshesTokenOnAuthFailure()
     {
         $state = $this->stateService->generateAndSaveState('tenant1');
-        $connectData = new \Packlink\BusinessLogic\Http\DTO\OAuthConnectData('codeXYZ', 'tenant1', $state);
+        $connectData = new \Packlink\BusinessLogic\Http\DTO\OAuthConnectData('codeXYZ', $state);
 
         $invalidResponse = new \Logeecom\Infrastructure\Http\HttpResponse(201, array(), json_encode(array(
             'unexpected_field' => 'notToken',
@@ -207,7 +207,7 @@ class OAuthServiceTest extends BaseTestWithServices
     public function testConnectOnAuthFailureTokenNotExpired()
     {
         $state = $this->stateService->generateAndSaveState('tenant1');
-        $connectData = new \Packlink\BusinessLogic\Http\DTO\OAuthConnectData('codeXYZ', 'tenant1', $state);
+        $connectData = new \Packlink\BusinessLogic\Http\DTO\OAuthConnectData('codeXYZ', $state);
 
         $invalidResponse = new \Logeecom\Infrastructure\Http\HttpResponse(201, array(), json_encode(array(
             'unexpected_field' => 'notToken',
