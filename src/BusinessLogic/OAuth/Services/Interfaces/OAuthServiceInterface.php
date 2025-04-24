@@ -42,4 +42,11 @@ interface OAuthServiceInterface
      * @return string
      */
     public function buildRedirectUrlAndSaveState(OAuthUrlData $data);
+
+    /**
+     * @param $state
+     *
+     * @return string
+     */
+    public function getTenantId($state);
 }
