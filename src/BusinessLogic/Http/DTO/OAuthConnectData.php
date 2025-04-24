@@ -7,16 +7,12 @@ class OAuthConnectData
     /** @var string */
     private $authorizationCode;
 
-    /** @var string */
-    private $tenantId;
-
     /*** @var string */
     private $state;
 
-    public function __construct($authorizationCode, $tenantId, $state)
+    public function __construct($authorizationCode, $state)
     {
         $this->authorizationCode = $authorizationCode;
-        $this->tenantId = $tenantId;
         $this->state = $state;
     }
 
@@ -31,13 +27,5 @@ class OAuthConnectData
     public function getAuthorizationCode()
     {
         return $this->authorizationCode;
-    }
-
-    /**
-     * @return string
-     */
-    public function getTenantId()
-    {
-        return $this->tenantId;
     }
 }

@@ -59,7 +59,7 @@ class OAuthService implements OAuthServiceInterface
         $token = $this->getToken($data->getAuthorizationCode());
 
         $entity = new OAuthInfo();
-        $entity->setTenantId($data->getTenantId());
+        $entity->setTenantId($this->getTenantId($data->getState()));
         $entity->setAccessToken($token->getAccessToken());
         $entity->setRefreshToken($token->getRefreshToken());
         $entity->setExpiresIn($token->getExpiresIn());
@@ -143,10 +143,29 @@ class OAuthService implements OAuthServiceInterface
         return 'https://' . rtrim($domain, '/') . '/auth/oauth2/authorize?' . $queryString;
     }
 
+    /**
+     * @param $state
+     *
+     * @return string
+     */
+    public function getTenantId($state){
+        return $this->stateService->extractTenantIdFromState($state);
+    }
+
+    /**
+     * @param $tenantId
+     *
+     * @return mixed
+     */
     private function saveState($tenantId){
         return $this->stateService->generateAndSaveState($tenantId);
     }
 
+    /**
+     * @param OAuthInfo $tokenEntity
+     *
+     * @return bool
+     */
     private function isTokenExpired(OAuthInfo $tokenEntity)
     {
         return (time() >= ($tokenEntity->getCreatedAt() + $tokenEntity->getExpiresIn()));
