@@ -5,6 +5,7 @@ namespace Logeecom\Tests\BusinessLogic\OAuth;
 use Logeecom\Infrastructure\ORM\Exceptions\QueryFilterInvalidParamException;
 use Logeecom\Infrastructure\ORM\Exceptions\RepositoryClassException;
 use Logeecom\Infrastructure\ORM\Exceptions\RepositoryNotRegisteredException;
+use Logeecom\Infrastructure\ORM\QueryFilter\QueryFilter;
 use Logeecom\Infrastructure\ORM\RepositoryRegistry;
 use Logeecom\Tests\BusinessLogic\Common\BaseTestWithServices;
 use Logeecom\Tests\Infrastructure\Common\TestComponents\ORM\MemoryRepository;
@@ -39,6 +40,9 @@ class OAuthStateServiceTest extends BaseTestWithServices
         $this->service = new OAuthStateService($this->repository);
     }
 
+    /**
+     * @return void
+     */
     public function testGenerateReturnsValidBase64String()
     {
         $state = $this->service->generate('test-tenant');
@@ -81,23 +85,34 @@ class OAuthStateServiceTest extends BaseTestWithServices
         $this->assertEquals($randState, $state->getState());
     }
 
+    /**
+     * @return void
+     *
+     * @throws InvalidOAuthStateException
+     * @throws QueryFilterInvalidParamException
+     * @throws \Logeecom\Infrastructure\ORM\Exceptions\EntityClassException
+     */
     public function testValidateStateWithValidData()
     {
         $tenantId = 'tenant_456';
-        $state = 'valid_random_state';
 
-        $this->service->saveState($tenantId, $state);
+        $this->service->generateAndSaveState($tenantId);
 
-        $encodedState = base64_encode(json_encode(array(
-            'tenantId' => $tenantId,
-            'state' => $state
-        )));
+        $filter = new QueryFilter();
+        $filter->where('tenantId', '=', $tenantId);
+        /**@var OAuthState $state*/
+        $state = $this->repository->selectOne($filter);
 
-        $result = $this->service->validateState($encodedState);
+        $result = $this->service->validateState($state->getState());
 
         $this->assertTrue($result);
     }
 
+    /**
+     * @return void
+     *
+     * @throws QueryFilterInvalidParamException
+     */
     public function testValidateStateThrowsExceptionForInvalidStructure()
     {
         $encodedState = base64_encode(json_encode(array('invalid_key' => 'value')));
@@ -110,6 +125,11 @@ class OAuthStateServiceTest extends BaseTestWithServices
         }
     }
 
+    /**
+     * @return void
+     *
+     * @throws QueryFilterInvalidParamException
+     */
     public function testValidateStateThrowsExceptionForMissingState()
     {
         $encodedState = base64_encode(json_encode(array(
@@ -121,7 +141,7 @@ class OAuthStateServiceTest extends BaseTestWithServices
             $this->service->validateState($encodedState);
             $this->fail('Expected InvalidOAuthStateException was not thrown.');
         } catch (InvalidOAuthStateException $e) {
-            $this->assertEquals('State not found.', $e->getMessage());
+            $this->assertEquals('State mismatch.', $e->getMessage());
         }
     }
 }

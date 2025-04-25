@@ -44,8 +44,9 @@ interface OAuthStateServiceInterface
 
     /**
      * @param string $tenantId
+     * @param string $state
      *
      * @return string
      */
-    public function getState($tenantId);
+    public function getState($tenantId, $state);
 }

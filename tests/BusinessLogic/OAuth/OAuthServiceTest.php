@@ -8,6 +8,7 @@ use Logeecom\Infrastructure\Http\Exceptions\HttpRequestException;
 use Logeecom\Infrastructure\Http\HttpClient;
 use Logeecom\Infrastructure\ORM\Exceptions\EntityClassException;
 use Logeecom\Infrastructure\ORM\Exceptions\QueryFilterInvalidParamException;
+use Logeecom\Infrastructure\ORM\QueryFilter\QueryFilter;
 use Logeecom\Infrastructure\ORM\RepositoryRegistry;
 use Logeecom\Tests\BusinessLogic\Common\BaseTestWithServices;
 use Logeecom\Tests\BusinessLogic\Common\TestComponents\OAuth\OAuthConfigurationService;
@@ -101,7 +102,7 @@ class OAuthServiceTest extends BaseTestWithServices
     }
 
     /**
-     * @throws QueryFilterInvalidParamException
+     * @throws QueryFilterInvalidParamException|EntityClassException
      */
     public function testBuildRedirectUrl()
     {
@@ -116,14 +117,17 @@ class OAuthServiceTest extends BaseTestWithServices
 
         $actualUrl = $this->service->buildRedirectUrlAndSaveState($data);
 
-        $state = $this->stateService->getState('tenant1')->getState();
+        $filter = new QueryFilter();
+        $filter->where('tenantId', '=', 'tenant1');
+        /**@var OAuthState $state*/
+        $state = $this->stateRepository->selectOne($filter);
 
         $expectedParams = http_build_query(array(
             'response_type' => 'code',
             'client_id' => 'client',
             'redirect_uri' => 'www.example.com',
             'scope' => 'write read',
-            'state' =>  $state,
+            'state' =>  $state->getState(),
         ), '', '&', PHP_QUERY_RFC3986);
 
         $expectedUrl = 'https://' . TenantDomainProvider::getDomain('ES') . '/auth/oauth2/authorize?' . $expectedParams;
@@ -155,7 +159,7 @@ class OAuthServiceTest extends BaseTestWithServices
         $this->assertEquals('apiKey', $apiKey);
 
         $entities = $this->repository->select();
-        $this->assertCount(1, $entities);
+        $this->assertCount(0, $entities);
     }
 
     public function testConnectRefreshesTokenOnAuthFailure()
@@ -204,6 +208,12 @@ class OAuthServiceTest extends BaseTestWithServices
         $this->assertEquals('newRefreshToken', $entity->getRefreshToken());
     }
 
+    /**
+     * @return void
+     *
+     * @throws HttpCommunicationException
+     * @throws HttpRequestException
+     */
     public function testConnectOnAuthFailureTokenNotExpired()
     {
         $state = $this->stateService->generateAndSaveState('tenant1');
