@@ -47,6 +47,12 @@ class OAuthProxyTest extends BaseTestWithServices
         $this->proxy = new OAuthProxy($oAuth, $this->httpClient);
     }
 
+    /**
+     * @return void
+     * @throws HttpAuthenticationException
+     * @throws HttpRequestException
+     * @throws \Logeecom\Infrastructure\Http\Exceptions\HttpCommunicationException
+     */
     public function testGetAuthTokenReturnsValidToken()
     {
         $response = json_encode(array(
@@ -66,6 +72,13 @@ class OAuthProxyTest extends BaseTestWithServices
         $this->assertEquals('refresh123', $token->getRefreshToken());
     }
 
+    /**
+     * @return void
+     *
+     * @throws HttpAuthenticationException
+     * @throws HttpRequestException
+     * @throws \Logeecom\Infrastructure\Http\Exceptions\HttpCommunicationException
+     */
     public function testRefreshAuthTokenReturnsToken()
     {
         $mockResponse = new HttpResponse(200, array(), json_encode(array(
@@ -82,6 +95,12 @@ class OAuthProxyTest extends BaseTestWithServices
         $this->assertEquals('new-token', $token->getAccessToken());
     }
 
+    /**
+     * @return void
+     *
+     * @throws HttpRequestException
+     * @throws \Logeecom\Infrastructure\Http\Exceptions\HttpCommunicationException
+     */
     public function testRequestTokenThrowsAuthenticationException()
     {
         $mockResponse = new HttpResponse(401, array(), json_encode(array(
@@ -99,6 +118,12 @@ class OAuthProxyTest extends BaseTestWithServices
         }
     }
 
+    /**
+     * @return void
+     *
+     * @throws HttpAuthenticationException
+     * @throws \Logeecom\Infrastructure\Http\Exceptions\HttpCommunicationException
+     */
     public function testRequestTokenThrowsRequestException()
     {
         $mockResponse = new HttpResponse(400, array(), json_encode(array(
@@ -116,6 +141,11 @@ class OAuthProxyTest extends BaseTestWithServices
         }
     }
 
+    /**
+     * @return void
+     *
+     * @throws \ReflectionException
+     */
     public function testGetRequestHeaders()
     {
         $reflection = new \ReflectionClass('Packlink\BusinessLogic\OAuth\Proxy\OAuthProxy');

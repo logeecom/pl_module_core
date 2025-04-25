@@ -7,6 +7,7 @@ use Logeecom\Infrastructure\Singleton;
 abstract class OAuthConfiguration extends Singleton
 {
     const CLASS_NAME =  __CLASS__;
+
     /**
      * Singleton instance of this class.
      *

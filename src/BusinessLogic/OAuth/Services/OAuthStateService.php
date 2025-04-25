@@ -2,6 +2,7 @@
 
 namespace Packlink\BusinessLogic\OAuth\Services;
 
+use Logeecom\Infrastructure\ORM\Entity;
 use Logeecom\Infrastructure\ORM\Exceptions\QueryFilterInvalidParamException;
 use Logeecom\Infrastructure\ORM\Interfaces\RepositoryInterface;
 use Logeecom\Infrastructure\ORM\QueryFilter\QueryFilter;
@@ -74,7 +75,7 @@ class OAuthStateService implements OAuthStateServiceInterface
     /**
      * @param $encodedState
      *
-     * @return mixed|string|null
+     * @return string|null
      */
     public function extractTenantIdFromState($encodedState)
     {
@@ -99,26 +100,30 @@ class OAuthStateService implements OAuthStateServiceInterface
             throw new InvalidOAuthStateException('Invalid state structure.');
         }
 
-        $state = $this->getState($data['tenantId']);
+        $state = $this->getState($data['tenantId'], $encodedState);
 
         if ($state === null) {
-            throw new InvalidOAuthStateException('State not found.');
+            throw new InvalidOAuthStateException('State mismatch.');
         }
+
+        $this->repository->delete($state);
 
         return true;
     }
 
     /**
      * @param $tenantId
+     * @param $state
      *
-     * @return \Logeecom\Infrastructure\ORM\Entity|null
+     * @return Entity|null
      *
      * @throws QueryFilterInvalidParamException
      */
-    public function getState($tenantId)
+    public function getState($tenantId, $state)
     {
         $filter = new QueryFilter();
         $filter->where('tenantId', '=', $tenantId);
+        $filter->where('state', '=', $state);
 
         return $this->repository->selectOne($filter);
     }

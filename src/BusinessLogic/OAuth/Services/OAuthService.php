@@ -69,6 +69,8 @@ class OAuthService implements OAuthServiceInterface
 
         try {
             $apiKey = $this->getApiKey($token->getAccessToken());
+
+            $this->repository->delete($entity);
         } catch (HttpAuthenticationException $e) {
             if(!$this->isTokenExpired($entity)) {
                 throw $e;
@@ -148,7 +150,8 @@ class OAuthService implements OAuthServiceInterface
      *
      * @return string
      */
-    public function getTenantId($state){
+    public function getTenantId($state)
+    {
         return $this->stateService->extractTenantIdFromState($state);
     }
 
@@ -157,7 +160,8 @@ class OAuthService implements OAuthServiceInterface
      *
      * @return mixed
      */
-    private function saveState($tenantId){
+    private function saveState($tenantId)
+    {
         return $this->stateService->generateAndSaveState($tenantId);
     }
 
