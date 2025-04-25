@@ -17,6 +17,11 @@ class TenantDomainProvider implements Services\Interfaces\TenantDomainProviderIn
     );
 
     /**
+     * @var string[]
+     */
+    private static $ALLOWED_COUNTRIES = array('ES', 'FR', 'DE', 'IT');
+
+    /**
      * @var string
      */
     private static $DEFAULT_DOMAIN = 'pro.packlink.fr';
@@ -33,5 +38,15 @@ class TenantDomainProvider implements Services\Interfaces\TenantDomainProviderIn
         }
 
         return self::$DEFAULT_DOMAIN;
+    }
+
+    /**
+     * Returns all allowed country codes.
+     *
+     * @return array
+     */
+    public static function getAllowedCountries()
+    {
+        return self::$ALLOWED_COUNTRIES;
     }
 }
