@@ -2,6 +2,9 @@
 
 namespace Packlink\BusinessLogic\OAuth\Services;
 
+use Packlink\BusinessLogic\DTO\Exceptions\FrontDtoNotRegisteredException;
+use Packlink\BusinessLogic\DTO\Exceptions\FrontDtoValidationException;
+use Packlink\BusinessLogic\Language\Translator;
 use Packlink\BusinessLogic\OAuth\Services;
 
 class TenantDomainProvider implements Services\Interfaces\TenantDomainProviderInterface
@@ -16,10 +19,13 @@ class TenantDomainProvider implements Services\Interfaces\TenantDomainProviderIn
         'IT' => 'pro.packlink.it',
     );
 
+
     /**
      * @var string[]
      */
-    private static $ALLOWED_COUNTRIES = array('ES', 'FR', 'DE', 'IT');
+    private static $ALLOWED_COUNTRIES = array(
+        'ES', 'FR', 'DE', 'IT'
+    );
 
     /**
      * @var string
@@ -44,9 +50,37 @@ class TenantDomainProvider implements Services\Interfaces\TenantDomainProviderIn
      * Returns all allowed country codes.
      *
      * @return array
+     * @throws FrontDtoNotRegisteredException
+     * @throws FrontDtoValidationException
      */
     public static function getAllowedCountries()
     {
-        return self::$ALLOWED_COUNTRIES;
+        return self::formatCountries(self::$ALLOWED_COUNTRIES);
+    }
+
+    /**
+     * Formats country codes to include translated names.
+     *
+     * @param array $countryCodes
+     *
+     * @return array
+     *
+     * @throws FrontDtoNotRegisteredException
+     * @throws FrontDtoValidationException
+     */
+
+    protected static function formatCountries($countries)
+    {
+        $formattedCountries = array();
+
+        foreach ($countries as $countryCode) {
+
+            $formattedCountries[] = array(
+                'code' => $countryCode,
+                'name' => Translator::translate('countries.' . $countryCode)
+            );
+        }
+
+        return $formattedCountries;
     }
 }
